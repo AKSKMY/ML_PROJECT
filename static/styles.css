@@ -1,0 +1,13 @@
+.traffic_container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.traffic_display {
+    width: 80%;
+    height: 80%;
+    border-radius: 20px;
+    margin: 30px;
+}
