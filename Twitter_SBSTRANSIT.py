@@ -30,11 +30,20 @@ twitter_password = "MachineLearning987@"  # Provided Twitter password
 
 #! Keywords for trigger/processing tweets
 keywords = [
-    "North East Line", "NEL", "Downtown Line", "DTL",
-    "Sengkang LRT line", "Punggol LRT line", "SPLRT", "delay", "MRT", "breakdown"
-]
+    "MRT disruption", "LRT disruption", "MRT delay", "LRT delay",
+    "MRT service suspension", "LRT service suspension", "MRT service resumption",
+    "LRT service resumption", "MRT service recovery", "LRT service recovery",
+    "MRT service status", "LRT service status", "MRT service alert",
+    "LRT service alert", "MRT service advisory", "LRT service advisory",
+    "MRT fault", "LRT fault", "MRT incident", "LRT incident",
+    "MRT service interruption", "LRT service interruption", "MRT service update",
+    "LRT service update"]
+
 #! EXCLUDED KEYWORDS
-exclude_keywords = ["extended", "Services"]  # Add more as needed
+exclude_keywords = [ "Bus service disruption", "Bus service delay", "Bus service suspension",
+    "Bus service resumption", "Bus service recovery", "Bus service status",
+    "Bus service alert", "Bus service advisory", "Bus fault", "Bus incident",
+    "Bus service interruption", "Bus service update"]  # Add more as needed
 
 # Retry mechanism for logging into Twitter
 for attempt in range(3):
@@ -76,9 +85,9 @@ for attempt in range(3):
             raise Exception("Failed to load tweets after multiple retries.")
 
 #! Scroll to load more tweets
-scroll_pause_time = 10  # Longer delay to reduce rate limiting
-max_scroll_attempts = 100  # Maximum number of scroll attempts
-target_tweet_count = 100  # Number of relevant tweets to scrape
+scroll_pause_time = 30  # Longer delay to reduce rate limiting
+max_scroll_attempts = 1500  # Maximum number of scroll attempts
+target_tweet_count = 1000  # Number of relevant tweets to scrape
 tweet_data = []  # List to store tweet data
 unique_tweets = set()  # Set to track unique tweet texts
 previous_height = 0  # Track scroll height to detect page load completion

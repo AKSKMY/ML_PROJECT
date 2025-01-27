@@ -30,11 +30,11 @@ twitter_password = "MachineLearning987@"  # Provided Twitter password
 
 #! Keywords for trigger/processing tweets
 keywords = [
-    "North East Line", "NEL", "Downtown Line", "DTL",
-    "Sengkang LRT line", "Punggol LRT line", "SPLRT", "delay", "MRT", "breakdown"
+    "Train fault", "Service disruption", "Service suspension"
+, "Service resumption", "Service recovery", "Service status","Service delay", "Service alert", "Service advisory", "Free regular bus service", "Add [X] mins train travel time", "Fault cleared", "Train services are progressively being restored"
 ]
 #! EXCLUDED KEYWORDS
-exclude_keywords = ["extended", "Services"]  # Add more as needed
+exclude_keywords = ["Scheduled maintenance", "Service enhancement", "New service launch", "Promotional events", "Non-service-related announcements"]  # Add more as needed
 
 # Retry mechanism for logging into Twitter
 for attempt in range(3):
@@ -61,7 +61,7 @@ for attempt in range(3):
             raise Exception("Failed to log into Twitter after multiple retries.")
 
 # Retry mechanism for loading the Twitter profile
-url = "https://x.com/SBSTransit_Ltd"
+url = "https://x.com/SMRT_Singapore"
 for attempt in range(3):
     try:
         driver.get(url)
@@ -76,9 +76,9 @@ for attempt in range(3):
             raise Exception("Failed to load tweets after multiple retries.")
 
 #! Scroll to load more tweets
-scroll_pause_time = 10  # Longer delay to reduce rate limiting
-max_scroll_attempts = 100  # Maximum number of scroll attempts
-target_tweet_count = 100  # Number of relevant tweets to scrape
+scroll_pause_time = 30  # Longer delay to reduce rate limiting
+max_scroll_attempts = 1500  # Maximum number of scroll attempts
+target_tweet_count = 1000  # Number of relevant tweets to scrape
 tweet_data = []  # List to store tweet data
 unique_tweets = set()  # Set to track unique tweet texts
 previous_height = 0  # Track scroll height to detect page load completion
@@ -127,7 +127,7 @@ while len(tweet_data) < target_tweet_count:
 
             # Exclude tweets containing specific keywords
             if contains_excluded_keywords(text, exclude_keywords):
-                print(f"Skipped tweet (excluded keyword): {text}")
+                # print(f"Skipped tweet (excluded keyword): {text}")
                 continue
 
             # Extract username
@@ -189,6 +189,6 @@ driver.quit()
 
 # Save the tweets to an Excel file
 df = pd.DataFrame(tweet_data)
-output_path = r"tweets_scraped.xlsx"
+output_path = r"tweets_scraped_SMRT.xlsx"
 df.to_excel(output_path, index=False)
 print(f"Tweets saved to {output_path}")
