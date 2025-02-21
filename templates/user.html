@@ -3,66 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MACHINE LEARNING</title>
+    <title>User Dashboard | Visualization</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            padding-top: 56px; /* Adjust for navbar height */
-        }
-        .container {
-            margin-top: 20px;
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .plot {
-            margin-bottom: 30px;
-        }
-    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
-        <a class="navbar-brand" href="#">MACHINE LEARNING</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-      
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav mr-auto">
-            <li class="nav-item active">
-              <a class="nav-link" href="/admin">Home</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/RouteOptimization">Pathing</a>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                Analysis
-              </a>
-              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                <a class="dropdown-item" href="/EOQ">Optimal Ordering [EOQ]</a>
-                <a class="dropdown-item" href="/JIT">Optimal Restock Timing [JIT]</a>
-                <!-- <a class="dropdown-item" href="/Hierarchical_Clustering">Orders Grouping [Hierarchical Cluster]</a> -->
-                <a class="dropdown-item" href="/ABC">Warehouse Optimizer [ABC, Apriori]</a>
-              </div>
-            </li>
-          </ul>
-            <form action="/logout" method="post" class="form-inline my-2 my-lg-0">
-                <button class="btn btn-outline-warning my-2 my-sm-0" type="submit">Logout</button>
-            </form>
-        </div>
-      </nav>
+    <nav class="navbar navbar-dark bg-dark">
+        <a class="navbar-brand">User Dashboard</a>
+        <form action="/logout" method="post">
+            <button class="btn btn-warning">Logout</button>
+        </form>
+    </nav>
 
-      <div class="container">
-        <h1>DATASET UPLOAD</h1>
-    
+    <div class="container">
+        <h2>Current Visualization</h2>
+        <div id="visualization"></div>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function(){
+            $.get("/get_visualization", function(data){
+                let visType = data.selected;
+                let trace = {
+                    x: [1, 2, 3, 4, 5],
+                    y: [10, 15, 13, 17, 20],
+                    mode: visType === "scatter" ? 'markers' : 'lines'
+                };
+                let layout = { title: visType.charAt(0).toUpperCase() + visType.slice(1) + " Visualization" };
+                Plotly.newPlot("visualization", [trace], layout);
+            });
+        });
+    </script>
 </body>
 </html>

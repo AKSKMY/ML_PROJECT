@@ -1,14 +1,22 @@
-from flask import Flask, request, render_template, render_template_string, redirect, url_for, session, flash, jsonify
-
-import pandas as pd
-import csv
+from flask import Flask, request, render_template, redirect, url_for, session, flash, jsonify
 import os
+import sys
 from werkzeug.utils import secure_filename
+# Add the parent directory (ML_PROJECT) to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from Algorithms.ml_models import TrainPredictor  # Import ML model class
 
 
 app = Flask(__name__, template_folder="../templates")
 
 app.secret_key = 'INF2008Project'
+
+dataset_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Datasets", "Latest_Dataset.xlsx"))
+
+# Initialize and train the ML models
+model = TrainPredictor()
+model.train_model(dataset_path)  # Train on startup
 
 admin_username = 'admin'
 admin_password = 'admin123'
@@ -23,18 +31,25 @@ def login():
         password = request.form['password']
         role = request.form['role']
 
+        # Check if admin credentials are valid
         if role == 'admin' and username == admin_username and password == admin_password:
             session['username'] = username
+            session['role'] = role  # Set role as admin
             flash('Login successful!', 'success')
             return redirect(url_for('index'))
+
+        # Check if user credentials are valid
         elif role == 'user' and username == user_username and password == user_password:
             session['username'] = username
+            session['role'] = role  # Set role as user
             flash('Login successful!', 'success')
             return redirect(url_for('user'))
+
         else:
             flash('Invalid credentials, please try again.', 'danger')
 
     return render_template('login.html')
+
 
 # Logout route
 @app.route('/logout', methods=['POST'])
@@ -86,7 +101,41 @@ def user():
     if 'username' not in session:
         return redirect(url_for('login'))
     
-    return render_template('user.html')
+    prediction = None
+    severity = None
+
+    if request.method == "POST":
+        train_alert = request.form["alert_text"]
+        feature1 = float(request.form["feature1"])
+        feature2 = float(request.form["feature2"])
+
+        predicted_delay, severity_label = model.predict(train_alert, feature1, feature2)
+
+        prediction = f"Predicted Delay: {predicted_delay:.2f} minutes"
+        severity = f"Severity: {severity_label}"
+
+    return render_template("user.html", prediction=prediction, severity=severity)
+
+# Default visualization type
+VISUALIZATION_TYPE = "bar"
+
+# Route to update visualization (Admin Only)
+@app.route('/update_visualization', methods=['POST'])
+def update_visualization():
+    if 'username' not in session or session.get('role') != 'admin':  # Check both username and role
+        flash("Unauthorized action.", "danger")
+        return redirect(url_for('login'))  # Redirect to login if not authorized
+    
+    global VISUALIZATION_TYPE
+    VISUALIZATION_TYPE = request.form.get("visualization", "bar")
+    flash("Visualization updated successfully!", "success")
+    return redirect(url_for('index'))
+
+# Route to get current visualization (User View)
+@app.route('/get_visualization', methods=['GET'])
+def get_visualization():
+    return jsonify({"selected": VISUALIZATION_TYPE})
+
 
 if __name__ == "__main__":
     app.run(debug=True)
