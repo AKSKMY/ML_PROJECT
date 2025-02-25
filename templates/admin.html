@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel | Visualization Control</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <title>Admin Panel | Model & Graph Selection</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
@@ -17,23 +16,39 @@
     </nav>
 
     <div class="container">
-        <h2>Select Visualization Type</h2>
-        <form action="/update_visualization" method="post">
-            <label for="visualization">Choose a visualization:</label>
-            <select id="visualization" name="visualization" class="form-control">
+        <h2>Select Model & Visualization</h2>
+
+        <!-- Select Machine Learning Model -->
+        <form action="/update_model" method="post">
+            <label for="model">Choose a Machine Learning Model:</label>
+            <select id="model" name="model" class="form-control">
+                <option value="Random Forest">Random Forest</option>
+                <option value="XGBoost">XGBoost</option>
+                <option value="LightGBM">LightGBM</option>
+            </select>
+            <button type="submit" class="btn btn-primary mt-2">Save Model</button>
+        </form>
+
+        <!-- Select Visualization Type -->
+        <form action="/update_graph" method="post">
+            <label for="graph">Choose a Visualization Type:</label>
+            <select id="graph" name="graph" class="form-control">
                 <option value="bar">Bar Chart</option>
                 <option value="line">Line Chart</option>
                 <option value="scatter">Scatter Plot</option>
             </select>
-            <button type="submit" class="btn btn-primary mt-2">Save</button>
+            <button type="submit" class="btn btn-primary mt-2">Save Graph</button>
         </form>
     </div>
 
     <script>
-        // Fetch the current selection from the server
+        // Load current model & graph selection
         $(document).ready(function(){
-            $.get("/get_visualization", function(data){
-                $("#visualization").val(data.selected);
+            $.get("/get_selected_model", function(data){
+                $("#model").val(data.selected);
+            });
+            $.get("/get_selected_graph", function(data){
+                $("#graph").val(data.selected);
             });
         });
     </script>

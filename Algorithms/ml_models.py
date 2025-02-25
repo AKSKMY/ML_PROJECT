@@ -1,58 +1,48 @@
 import numpy as np
-import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import mean_absolute_error, accuracy_score
+import joblib
+import os
 
 class TrainPredictor:
     def __init__(self):
-        self.vectorizer = TfidfVectorizer(stop_words='english', max_features=500)
-        self.label_encoder = LabelEncoder()
-        self.rf_reg = RandomForestRegressor(n_estimators=100, random_state=42)
-        self.rf_cls = RandomForestClassifier(n_estimators=100, random_state=42)
-    
-    def train_model(self, file_path="../Datasets/Latest_Dataset.xlsx"):
-        """ Train the models using the dataset """
-        xls = pd.ExcelFile(file_path)
-        df = pd.read_excel(xls, sheet_name="Sheet1")
+        # Load vectorizer & label encoder
+        self.vectorizer = joblib.load("../Algorithms/tfidf_vectorizer.pkl")
+        self.label_encoder = joblib.load("../Algorithms/label_encoder.pkl")
 
-        # Text processing (TF-IDF)
-        X_text = self.vectorizer.fit_transform(df.iloc[:, 1].astype(str)).toarray()
+        # Load all models with correct filenames
+        self.models = {
+            "Random Forest": {
+                "reg": joblib.load("../Algorithms/best_random_forest_regressor.pkl"),
+                "cls": joblib.load("../Algorithms/best_random_forest_classifier.pkl")
+            },
+            "XGBoost": {
+                "reg": joblib.load("../Algorithms/best_xgboost_regressor.pkl"),
+                "cls": joblib.load("../Algorithms/best_xgboost_classifier.pkl")
+            },
+            "LightGBM": {
+                "reg": joblib.load("../Algorithms/best_lightgbm_regressor.pkl"),
+                "cls": joblib.load("../Algorithms/best_lightgbm_classifier.pkl")
+            }
+        }
 
-        # Encode categorical columns
-        df['Day'] = self.label_encoder.fit_transform(df['Day'].astype(str))
+        # Default model selection
+        self.selected_model = "Random Forest"
+        self.load_selected_model()
 
-        # Identify numeric features
-        numeric_features = [col for col in df.columns if str(col).strip() in ['146', '10']]
-        df[numeric_features] = df[numeric_features].fillna(df[numeric_features].median())
+    def load_selected_model(self):
+        """ Load the selected model from app.py """
+        model_file = "../Algorithms/selected_model.txt"
 
-        # Combine text features with numeric features
-        X_numeric = df[numeric_features].values
-        X = np.hstack((X_text, X_numeric))
+        if os.path.exists(model_file):
+            with open(model_file, "r") as file:
+                model_name = file.read().strip()
+                if model_name in self.models:
+                    self.selected_model = model_name
 
-        # Define target variables
-        y_regression = df[numeric_features[1]].values  # Regression target (delay in minutes)
-        y_classification = (df[numeric_features[1]] > 10).astype(int).values  # Classification target (>10 mins delay)
+        # Load the correct models
+        self.best_reg = self.models[self.selected_model]["reg"]
+        self.best_cls = self.models[self.selected_model]["cls"]
 
-        # Train-test split
-        X_train, X_test, y_train_reg, y_test_reg = train_test_split(X, y_regression, test_size=0.2, random_state=42)
-        X_train_cls, X_test_cls, y_train_cls, y_test_cls = train_test_split(X, y_classification, test_size=0.2, random_state=42)
-
-        # Train models
-        self.rf_reg.fit(X_train, y_train_reg)
-        self.rf_cls.fit(X_train_cls, y_train_cls)
-
-        # Evaluate models
-        y_pred_rf_reg = self.rf_reg.predict(X_test)
-        y_pred_rf_cls = self.rf_cls.predict(X_test_cls)
-
-        mae_rf = mean_absolute_error(y_test_reg, y_pred_rf_reg)
-        acc_rf = accuracy_score(y_test_cls, y_pred_rf_cls)
-
-        print(f"Random Forest Regression MAE: {mae_rf:.4f}")
-        print(f"Random Forest Classification Accuracy: {acc_rf:.4f}")
+        print(f"✅ Using Selected Model: {self.selected_model}")
 
     def predict(self, train_alert, feature1, feature2):
         """ Predict train delay and severity based on user input """
@@ -60,8 +50,8 @@ class TrainPredictor:
         X_numeric = np.array([[feature1, feature2]])
         X_input = np.hstack((X_text, X_numeric))
 
-        predicted_delay = self.rf_reg.predict(X_input)[0]
-        predicted_severity = self.rf_cls.predict(X_input)[0]
+        predicted_delay = self.best_reg.predict(X_input)[0]
+        predicted_severity = self.best_cls.predict(X_input)[0]
         severity_label = "High Delay" if predicted_severity == 1 else "Low Delay"
 
         return predicted_delay, severity_label
