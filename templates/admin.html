@@ -16,21 +16,23 @@
     </nav>
 
     <div class="container">
-        <h2>Select Model & Visualization</h2>
+        <h2 class="mt-4">Select Model & Visualization</h2>
+        
+        <div class="alert alert-info mt-3" id="model-status-alert">
+            Loading model information...
+        </div>
 
         <!-- Select Machine Learning Model -->
-        <form action="/update_model" method="post">
+        <form action="/update_model" method="post" class="mt-4">
             <label for="model">Choose a Machine Learning Model:</label>
             <select id="model" name="model" class="form-control">
-                <option value="Random Forest">Random Forest</option>
-                <option value="XGBoost">XGBoost</option>
-                <option value="LightGBM">LightGBM</option>
+                <!-- Options will be populated dynamically -->
             </select>
             <button type="submit" class="btn btn-primary mt-2">Save Model</button>
         </form>
 
         <!-- Select Visualization Type -->
-        <form action="/update_graph" method="post">
+        <form action="/update_graph" method="post" class="mt-4">
             <label for="graph">Choose a Visualization Type:</label>
             <select id="graph" name="graph" class="form-control">
                 <option value="bar">Bar Chart</option>
@@ -39,17 +41,78 @@
             </select>
             <button type="submit" class="btn btn-primary mt-2">Save Graph</button>
         </form>
+        
+        <div class="mt-4">
+            <h3>Model Dependencies</h3>
+            <div class="card">
+                <div class="card-body">
+                    <h5>Required Python Packages:</h5>
+                    <ul>
+                        <li><strong>scikit-learn</strong>: Required for Random Forest models</li>
+                        <li><strong>xgboost</strong>: Required for XGBoost models (Install with: <code>pip install xgboost</code>)</li>
+                        <li><strong>lightgbm</strong>: Required for LightGBM models (Install with: <code>pip install lightgbm</code>)</li>
+                        <li><strong>numpy</strong>: Required for all models</li>
+                        <li><strong>joblib</strong>: Required for loading saved models</li>
+                    </ul>
+                    <p>If certain models are not appearing in the dropdown, you may need to install their required dependencies.</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Load current model & graph selection
-        $(document).ready(function(){
-            $.get("/get_selected_model", function(data){
-                $("#model").val(data.selected);
+        // Load model status and dynamically populate the dropdown
+        function loadModelStatus() {
+            $.get("/model_status", function(data) {
+                let availableModels = data.available_models || [];
+                let selectedModel = data.selected_model || "";
+                
+                // Clear and repopulate model dropdown
+                $("#model").empty();
+                
+                if (availableModels.length > 0) {
+                    availableModels.forEach(function(model) {
+                        let option = $("<option></option>")
+                            .attr("value", model)
+                            .text(model === "SVM" ? "Support Vector Machine" : model);
+                        
+                        if (model === selectedModel) {
+                            option.attr("selected", "selected");
+                        }
+                        
+                        $("#model").append(option);
+                    });
+                    
+                    $("#model-status-alert")
+                        .removeClass("alert-info alert-warning alert-danger")
+                        .addClass("alert-success")
+                        .text(`${availableModels.length} models available. Currently using: ${selectedModel}`);
+                } else {
+                    $("#model-status-alert")
+                        .removeClass("alert-info alert-success")
+                        .addClass("alert-danger")
+                        .text("No ML models could be loaded. Please check the dependencies.");
+                }
+            })
+            .fail(function() {
+                $("#model-status-alert")
+                    .removeClass("alert-info alert-success")
+                    .addClass("alert-danger")
+                    .text("Error loading model information. Please check server logs.");
             });
-            $.get("/get_selected_graph", function(data){
+        }
+        
+        // Load current graph selection
+        function loadGraphSelection() {
+            $.get("/get_selected_graph", function(data) {
                 $("#graph").val(data.selected);
             });
+        }
+
+        // On page load
+        $(document).ready(function() {
+            loadModelStatus();
+            loadGraphSelection();
         });
     </script>
 </body>

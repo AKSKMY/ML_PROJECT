@@ -8,6 +8,7 @@ from sklearn.metrics import mean_absolute_error, accuracy_score
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from xgboost import XGBRegressor, XGBClassifier
 from lightgbm import LGBMRegressor, LGBMClassifier
+from sklearn.svm import SVR, SVC  # Import SVM models
 import joblib
 
 # Get absolute path dynamically
@@ -65,7 +66,9 @@ class ModelSelector:
             "XGBoost": (XGBRegressor(n_estimators=100, random_state=42, verbosity=0),
                         XGBClassifier(n_estimators=100, random_state=42, use_label_encoder=False, verbosity=0)),
             "LightGBM": (LGBMRegressor(n_estimators=100, random_state=42),
-                         LGBMClassifier(n_estimators=100, random_state=42))
+                         LGBMClassifier(n_estimators=100, random_state=42)),
+            "SVM": (SVR(C=10, kernel='rbf', gamma='scale'),  # Add SVM models
+                   SVC(C=10, kernel='rbf', gamma='scale', probability=True, random_state=42))
         }
 
         results = {}
