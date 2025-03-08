@@ -3,17 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Dashboard | Visualization</title>
+    <title>User Dashboard | Train Delay Prediction</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        /* Ensure the graph container has a defined height */
-        #visualization {
-            width: 100%;
-            height: 400px;
-        }
-    </style>
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark">
@@ -23,6 +16,7 @@
         </form>
     </nav>
 
+    <!-- Visualization Section -->
     <div class="container mt-4">
         <h2>Current Visualization</h2>
         <div id="visualization">
@@ -30,46 +24,91 @@
         </div>
     </div>
 
-    <script>
-        $(document).ready(function(){
-            // Fetch selected graph type from Flask
-            $.get("/get_selected_graph", function(data){
-                let graphType = data.selected;
+    <!-- Train Delay Prediction Form -->
+    <div class="container mt-4">
+        <h2>Train Delay Prediction</h2>
+        <form id="predictionForm">
+            <div class="form-group">
+                <label for="start_station">Enter your starting station:</label>
+                <input type="text" class="form-control" id="start_station" name="start_station" required>
+            </div>
+            <div class="form-group">
+                <label for="end_station">Enter your ending station:</label>
+                <input type="text" class="form-control" id="end_station" name="end_station" required>
+            </div>
+            <div class="form-group">
+                <label for="travel_day">Enter the day of travel (e.g., Monday):</label>
+                <input type="text" class="form-control" id="travel_day" name="travel_day" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Predict Disruption</button>
+        </form>
 
-                // Debugging: Log the graph type to console
+        <div id="result-container" class="mt-4" style="display: none;">
+            <div class="alert alert-info" id="predictionResult"></div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Fetch selected graph type from Flask
+            $.get("/get_selected_graph", function(data) {
+                let graphType = data.selected;
                 console.log("Selected Graph Type:", graphType);
 
-                // Ensure graphType is valid
                 let validTypes = ["bar", "line", "scatter"];
                 if (!validTypes.includes(graphType)) {
                     graphType = "bar";  // Default to bar chart if invalid
                 }
 
-                // Sample data for visualization
                 let trace = {
                     x: [1, 2, 3, 4, 5],
                     y: [10, 15, 13, 17, 20],
-                    mode: graphType === "scatter" ? "markers" : "lines",  // Handle scatter mode correctly
+                    mode: graphType === "scatter" ? "markers" : "lines",
                     type: graphType
                 };
 
                 let layout = {
                     title: graphType.charAt(0).toUpperCase() + graphType.slice(1) + " Visualization",
-                    width: 800,  // Ensures graph does not shrink too much
+                    width: 800,
                     height: 400
                 };
 
-                // Render the graph using Plotly
                 Plotly.newPlot("visualization", [trace], layout);
-
-                // Remove "Loading graph..." text after loading the graph
                 $("#loading-text").remove();
-            })
-            .fail(function(){
+            }).fail(function() {
                 console.error("Failed to fetch graph type.");
                 $("#visualization").html("<p>Error loading graph. Please try again.</p>");
             });
+
+            // Form Submission for Prediction
+        $("#predictionForm").submit(function(event){
+            event.preventDefault();
+
+            let formData = {
+                start_station: $("#start_station").val(),
+                end_station: $("#end_station").val(),
+                travel_day: $("#travel_day").val()
+            };
+
+            $.ajax({
+                type: "POST",
+                url: "/naivebayes_predict",
+                data: formData,
+                dataType: "json",
+                success: function(response) {
+                    $("#result-container").show();
+                    $("#predictionResult").removeClass("alert-danger").addClass("alert-info");
+                    $("#predictionResult").text(response.prediction);
+                },
+                error: function(xhr) {
+                    let errorMessage = xhr.responseJSON ? xhr.responseJSON.error : "An error occurred.";
+                    $("#result-container").show();
+                    $("#predictionResult").removeClass("alert-info").addClass("alert-danger");
+                    $("#predictionResult").text(errorMessage);
+                }
+            });
         });
+    });
     </script>
 </body>
 </html>

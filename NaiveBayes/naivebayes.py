@@ -8,7 +8,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.metrics import accuracy_score
 
 # Load Dataset
-file_path = 'Dataset_Latest.xlsx'
+file_path = "./NaiveBayes/Dataset_Latest.xlsx"
 df = pd.read_excel(file_path, engine='openpyxl')
 
 # Extract necessary columns
