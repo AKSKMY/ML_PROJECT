@@ -150,41 +150,34 @@ def naivebayes_predict():
     if not model_loaded:
         return jsonify({"error": "Model is not available. Please check the server logs."}), 500
 
-    # Format input exactly like naivebayes.py
     input_text = f"{start_station} {end_station} {travel_day}"
 
     try:
-        # Ensure input is transformed using the model's pipeline
-        prediction_prob = naive_bayes_model.predict_proba([input_text])[0][1] * 100  # Get probability of disruption
+        # Predict probability
+        prediction_prob = naive_bayes_model.predict_proba([input_text])[0][1] * 100
 
-        # === Compute Accuracy on Test Data ===
+        # Calculate model accuracy
         dataset_path = os.path.join(BASE_DIR, "NaiveBayes", "Dataset_Latest.xlsx")
         df = pd.read_excel(dataset_path, engine='openpyxl')
 
-        # Extract necessary columns
         stations_col = df.columns[8]
         day_col = df.columns[9]
 
-        # Preprocessing
         df['stations'] = df[stations_col].apply(lambda x: ' '.join(str(x).split('\n')))
         df['day'] = df[day_col]
         df['features'] = df['stations'] + ' ' + df['day']
 
-        # Split data into training and test sets
         _, X_test, _, y_test = train_test_split(df['features'], df['day'], test_size=0.2, random_state=42)
-
-        # Make predictions
         y_pred = naive_bayes_model.predict(X_test)
-
-        # Compute accuracy
         accuracy = accuracy_score(y_test, y_pred) * 100
 
     except Exception as e:
         return jsonify({"error": f"Prediction failed: {str(e)}"}), 500
 
     return jsonify({
-        "prediction": f"Disruption Probability: {prediction_prob:.2f}%",
-        "accuracy": f"Model Accuracy: {accuracy:.2f}%"
+        "prediction": f"{prediction_prob:.2f}",
+        "accuracy": f"{accuracy:.2f}",
+        "travel_day": travel_day
     })
 
 

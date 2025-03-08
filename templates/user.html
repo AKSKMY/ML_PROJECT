@@ -24,7 +24,6 @@
         </div>
     </div>
 
-    <!-- Train Delay Prediction Form -->
     <div class="container mt-4">
         <h2>Train Delay Prediction</h2>
         <form id="predictionForm">
@@ -45,6 +44,17 @@
 
         <div id="result-container" class="mt-4" style="display: none;">
             <div class="alert alert-info" id="predictionResult"></div>
+        </div>
+
+        <!-- Graph Container -->
+        <div class="mt-4">
+            <h3>Disruption Probability Graph</h3>
+            <div id="probabilityGraph"></div>
+        </div>
+
+        <div class="mt-4">
+            <h3>Model Accuracy</h3>
+            <div id="accuracyGraph"></div>
         </div>
     </div>
 
@@ -81,34 +91,71 @@
             });
 
             // Form Submission for Prediction
-        $("#predictionForm").submit(function(event){
-            event.preventDefault();
+         $("#predictionForm").submit(function(event){
+                event.preventDefault();
 
-            let formData = {
-                start_station: $("#start_station").val(),
-                end_station: $("#end_station").val(),
-                travel_day: $("#travel_day").val()
-            };
+                let formData = {
+                    start_station: $("#start_station").val(),
+                    end_station: $("#end_station").val(),
+                    travel_day: $("#travel_day").val()
+                };
 
-            $.ajax({
-                type: "POST",
-                url: "/naivebayes_predict",
-                data: formData,
-                dataType: "json",
-                success: function(response) {
-                    $("#result-container").show();
-                    $("#predictionResult").removeClass("alert-danger").addClass("alert-info");
-                    $("#predictionResult").text(response.prediction);
-                },
-                error: function(xhr) {
-                    let errorMessage = xhr.responseJSON ? xhr.responseJSON.error : "An error occurred.";
-                    $("#result-container").show();
-                    $("#predictionResult").removeClass("alert-info").addClass("alert-danger");
-                    $("#predictionResult").text(errorMessage);
-                }
+                $.ajax({
+                    type: "POST",
+                    url: "/naivebayes_predict",
+                    data: formData,
+                    dataType: "json",
+                    success: function(response) {
+                        $("#result-container").show();
+                        $("#predictionResult").removeClass("alert-danger").addClass("alert-info");
+                        $("#predictionResult").text("Disruption Probability: " + response.prediction + "%");
+
+                        drawGraph(response.prediction, response.travel_day);
+                        drawAccuracy(response.accuracy);
+                    },
+                    error: function(xhr) {
+                        let errorMessage = xhr.responseJSON ? xhr.responseJSON.error : "An error occurred.";
+                        $("#result-container").show();
+                        $("#predictionResult").removeClass("alert-info").addClass("alert-danger");
+                        $("#predictionResult").text(errorMessage);
+                    }
+                });
             });
         });
-    });
+
+        function drawGraph(probability, day) {
+            let data = [{
+                x: [day],
+                y: [parseFloat(probability) / 100],  // Convert percentage to decimal
+                type: "bar",
+                marker: { color: "red" }
+            }];
+
+            let layout = {
+                title: "Disruption Probability on " + day,
+                yaxis: { title: "Probability", range: [0, 1] },
+                xaxis: { title: "Day" }
+            };
+
+            Plotly.newPlot("probabilityGraph", data, layout);
+        }
+
+        function drawAccuracy(accuracy) {
+            let data = [{
+                x: ["Model Accuracy"],
+                y: [parseFloat(accuracy)],
+                type: "bar",
+                marker: { color: "blue" }
+            }];
+
+            let layout = {
+                title: "Model Accuracy",
+                yaxis: { title: "Accuracy (%)", range: [0, 100] },
+                xaxis: { title: "Metric" }
+            };
+
+            Plotly.newPlot("accuracyGraph", data, layout);
+        }
     </script>
 </body>
 </html>
