@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel | Model & Graph Selection</title>
+    <title>Admin Panel | Model & Filters</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
@@ -16,8 +16,8 @@
     </nav>
 
     <div class="container">
-        <h2 class="mt-4">Select Model & Visualization</h2>
-        
+        <h2 class="mt-4">Select Model & Data Filters</h2>
+
         <div class="alert alert-info mt-3" id="model-status-alert">
             Loading model information...
         </div>
@@ -31,17 +31,16 @@
             <button type="submit" class="btn btn-primary mt-2">Save Model</button>
         </form>
 
-        <!-- Select Visualization Type -->
-        <form action="/update_graph" method="post" class="mt-4">
-            <label for="graph">Choose a Visualization Type:</label>
-            <select id="graph" name="graph" class="form-control">
-                <option value="bar">Bar Chart</option>
-                <option value="line">Line Chart</option>
-                <option value="scatter">Scatter Plot</option>
-            </select>
-            <button type="submit" class="btn btn-primary mt-2">Save Graph</button>
+        <!-- Select Filters to Show on User Page -->
+        <form action="/admin" method="post" class="mt-4">
+            <h4>Choose User Filters</h4>
+            <label><input type="checkbox" name="license_class" {% if filters.license_class %}checked{% endif %}> License Class</label><br>
+            <label><input type="checkbox" name="mileage_range" {% if filters.mileage_range %}checked{% endif %}> Mileage Range</label><br>
+            <label><input type="checkbox" name="coe_left_range" {% if filters.coe_left_range %}checked{% endif %}> COE Left Range</label><br>
+            <label><input type="checkbox" name="previous_owners" {% if filters.previous_owners %}checked{% endif %}> Number of Previous Owners</label><br>
+            <button type="submit" class="btn btn-success mt-2">Save Filters</button>
         </form>
-        
+
         <div class="mt-4">
             <h3>Model Dependencies</h3>
             <div class="card">
@@ -49,12 +48,12 @@
                     <h5>Required Python Packages:</h5>
                     <ul>
                         <li><strong>scikit-learn</strong>: Required for Random Forest models</li>
-                        <li><strong>xgboost</strong>: Required for XGBoost models (Install with: <code>pip install xgboost</code>)</li>
-                        <li><strong>lightgbm</strong>: Required for LightGBM models (Install with: <code>pip install lightgbm</code>)</li>
+                        <li><strong>xgboost</strong>: Required for XGBoost models (Install: <code>pip install xgboost</code>)</li>
+                        <li><strong>lightgbm</strong>: Required for LightGBM models (Install: <code>pip install lightgbm</code>)</li>
                         <li><strong>numpy</strong>: Required for all models</li>
                         <li><strong>joblib</strong>: Required for loading saved models</li>
                     </ul>
-                    <p>If certain models are not appearing in the dropdown, you may need to install their required dependencies.</p>
+                    <p>If certain models do not appear in the dropdown, ensure their dependencies are installed.</p>
                 </div>
             </div>
         </div>
@@ -66,23 +65,22 @@
             $.get("/model_status", function(data) {
                 let availableModels = data.available_models || [];
                 let selectedModel = data.selected_model || "";
-                
-                // Clear and repopulate model dropdown
+
                 $("#model").empty();
-                
+
                 if (availableModels.length > 0) {
                     availableModels.forEach(function(model) {
                         let option = $("<option></option>")
                             .attr("value", model)
                             .text(model === "SVM" ? "Support Vector Machine" : model);
-                        
+
                         if (model === selectedModel) {
                             option.attr("selected", "selected");
                         }
-                        
+
                         $("#model").append(option);
                     });
-                    
+
                     $("#model-status-alert")
                         .removeClass("alert-info alert-warning alert-danger")
                         .addClass("alert-success")
@@ -101,18 +99,9 @@
                     .text("Error loading model information. Please check server logs.");
             });
         }
-        
-        // Load current graph selection
-        function loadGraphSelection() {
-            $.get("/get_selected_graph", function(data) {
-                $("#graph").val(data.selected);
-            });
-        }
 
-        // On page load
         $(document).ready(function() {
             loadModelStatus();
-            loadGraphSelection();
         });
     </script>
 </body>

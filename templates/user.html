@@ -3,159 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Dashboard | Train Delay Prediction</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <title>User | Motorbike Price Prediction</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark">
-        <a class="navbar-brand">User Dashboard</a>
+        <a class="navbar-brand">Motorbike Price Prediction</a>
         <form action="/logout" method="post">
             <button class="btn btn-warning">Logout</button>
         </form>
     </nav>
 
-    <!-- Visualization Section -->
-    <div class="container mt-4">
-        <h2>Current Visualization</h2>
-        <div id="visualization">
-            <p id="loading-text">Loading graph...</p>
-        </div>
-    </div>
+    <div class="container">
+        <h2 class="mt-4">Find Predicted Prices</h2>
 
-    <div class="container mt-4">
-        <h2>Train Delay Prediction</h2>
-        <form id="predictionForm">
-            <div class="form-group">
-                <label for="start_station">Enter your starting station:</label>
-                <input type="text" class="form-control" id="start_station" name="start_station" required>
+        <form method="POST" action="/user">
+            <div id="filter-options">
+                <!-- Filters will be dynamically loaded here -->
             </div>
-            <div class="form-group">
-                <label for="end_station">Enter your ending station:</label>
-                <input type="text" class="form-control" id="end_station" name="end_station" required>
-            </div>
-            <div class="form-group">
-                <label for="travel_day">Enter the day of travel (e.g., Monday):</label>
-                <input type="text" class="form-control" id="travel_day" name="travel_day" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Predict Disruption</button>
+            <button type="submit" class="btn btn-primary mt-3">Get Predicted Price</button>
         </form>
 
-        <div id="result-container" class="mt-4" style="display: none;">
-            <div class="alert alert-info" id="predictionResult"></div>
-        </div>
-
-        <!-- Graph Container -->
+        {% if prediction %}
         <div class="mt-4">
-            <h3>Disruption Probability Graph</h3>
-            <div id="probabilityGraph"></div>
+            <h3>Predicted Prices Based on Your Input</h3>
+            <p>Class: {{ license_class }}</p>
+            <p>Mileage range: {{ mileage_range }} km</p>
+            <p>COE remaining: {{ coe_left_range }} years</p>
+            <p>Number of previous owners: {{ previous_owners }}</p>
+            <h3>💰 Predicted Price: SGD {{ prediction | round(2) }}</h3>
         </div>
-
-        <div class="mt-4">
-            <h3>Model Accuracy</h3>
-            <div id="accuracyGraph"></div>
-        </div>
+        {% endif %}
     </div>
 
     <script>
         $(document).ready(function() {
-            // Fetch selected graph type from Flask
-            $.get("/get_selected_graph", function(data) {
-                let graphType = data.selected;
-                console.log("Selected Graph Type:", graphType);
+            $.get("/get_filters", function(filters) {
+                let filterHTML = "";
 
-                let validTypes = ["bar", "line", "scatter"];
-                if (!validTypes.includes(graphType)) {
-                    graphType = "bar";  // Default to bar chart if invalid
+                if (filters.license_class) {
+                    filterHTML += `<label>License Class:</label>
+                        <select name="license_class" class="form-control">
+                            <option value="2b">2b</option>
+                            <option value="2a">2a</option>
+                            <option value="2">2</option>
+                        </select><br>`;
                 }
 
-                let trace = {
-                    x: [1, 2, 3, 4, 5],
-                    y: [10, 15, 13, 17, 20],
-                    mode: graphType === "scatter" ? "markers" : "lines",
-                    type: graphType
-                };
+                if (filters.mileage_range) {
+                    filterHTML += `<label>Mileage Range:</label>
+                        <select name="mileage_range" class="form-control">
+                            <option value="1000-5000">1,000-5,000km</option>
+                            <option value="5000-10000">5,000-10,000km</option>
+                            <option value="10000-20000">10,000-20,000km</option>
+                        </select><br>`;
+                }
 
-                let layout = {
-                    title: graphType.charAt(0).toUpperCase() + graphType.slice(1) + " Visualization",
-                    width: 800,
-                    height: 400
-                };
+                if (filters.coe_left_range) {
+                    filterHTML += `<label>COE Left:</label>
+                        <select name="coe_left_range" class="form-control">
+                            <option value="1-2">1-2 years</option>
+                            <option value="3-4">3-4 years</option>
+                            <option value="5-6">5-6 years</option>
+                        </select><br>`;
+                }
 
-                Plotly.newPlot("visualization", [trace], layout);
-                $("#loading-text").remove();
-            }).fail(function() {
-                console.error("Failed to fetch graph type.");
-                $("#visualization").html("<p>Error loading graph. Please try again.</p>");
-            });
+                if (filters.previous_owners) {
+                    filterHTML += `<label>Previous Owners:</label>
+                        <select name="previous_owners" class="form-control">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3 or more</option>
+                        </select><br>`;
+                }
 
-            // Form Submission for Prediction
-         $("#predictionForm").submit(function(event){
-                event.preventDefault();
-
-                let formData = {
-                    start_station: $("#start_station").val(),
-                    end_station: $("#end_station").val(),
-                    travel_day: $("#travel_day").val()
-                };
-
-                $.ajax({
-                    type: "POST",
-                    url: "/naivebayes_predict",
-                    data: formData,
-                    dataType: "json",
-                    success: function(response) {
-                        $("#result-container").show();
-                        $("#predictionResult").removeClass("alert-danger").addClass("alert-info");
-                        $("#predictionResult").text("Disruption Probability: " + response.prediction + "%");
-
-                        drawGraph(response.prediction, response.travel_day);
-                        drawAccuracy(response.accuracy);
-                    },
-                    error: function(xhr) {
-                        let errorMessage = xhr.responseJSON ? xhr.responseJSON.error : "An error occurred.";
-                        $("#result-container").show();
-                        $("#predictionResult").removeClass("alert-info").addClass("alert-danger");
-                        $("#predictionResult").text(errorMessage);
-                    }
-                });
+                $("#filter-options").html(filterHTML);
             });
         });
-
-        function drawGraph(probability, day) {
-            let data = [{
-                x: [day],
-                y: [parseFloat(probability) / 100],  // Convert percentage to decimal
-                type: "bar",
-                marker: { color: "red" }
-            }];
-
-            let layout = {
-                title: "Disruption Probability on " + day,
-                yaxis: { title: "Probability", range: [0, 1] },
-                xaxis: { title: "Day" }
-            };
-
-            Plotly.newPlot("probabilityGraph", data, layout);
-        }
-
-        function drawAccuracy(accuracy) {
-            let data = [{
-                x: ["Model Accuracy"],
-                y: [parseFloat(accuracy)],
-                type: "bar",
-                marker: { color: "blue" }
-            }];
-
-            let layout = {
-                title: "Model Accuracy",
-                yaxis: { title: "Accuracy (%)", range: [0, 100] },
-                xaxis: { title: "Metric" }
-            };
-
-            Plotly.newPlot("accuracyGraph", data, layout);
-        }
     </script>
 </body>
 </html>
