@@ -38,6 +38,10 @@ class TrainPredictor:
                     "reg": joblib.load(os.path.join(current_dir, "best_xgboost_regressor.pkl")),
                     "cls": joblib.load(os.path.join(current_dir, "best_xgboost_classifier.pkl"))
                 }
+                if os.system("nvidia-smi") == 0:
+                    print("GPU is available!")
+                else:
+                    print("No GPU detected.")
                 self.available_models.append("XGBoost")
                 print("✅ XGBoost models loaded successfully")
             except Exception as e:
