@@ -3,105 +3,878 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel | Model & Filters</title>
+    <title>Admin Panel | Model Insights & Controls</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .visualization-card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .metric-card {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            transition: transform 0.3s;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .metric-label {
+            font-size: 14px;
+            color: #666;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark">
-        <a class="navbar-brand">Admin Panel</a>
+        <a class="navbar-brand">🏍️ Motorcycle Price Prediction | Admin Panel</a>
         <form action="/logout" method="post">
             <button class="btn btn-warning">Logout</button>
         </form>
     </nav>
 
-    <div class="container">
-        <h2 class="mt-4">Select Model & Data Filters</h2>
+    <div class="container-fluid">
+        <div class="row mt-4">
+            <!-- Sidebar / Control Panel -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5>Model Control Panel</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info" id="model-status-alert">
+                            Loading model information...
+                        </div>
 
-        <div class="alert alert-info mt-3" id="model-status-alert">
-            Loading model information...
-        </div>
-
-        <!-- Select Machine Learning Model -->
-        <form action="/update_model" method="post" class="mt-4">
-            <label for="model">Choose a Machine Learning Model:</label>
-            <select id="model" name="model" class="form-control">
-                <!-- Options will be populated dynamically -->
-            </select>
-            <button type="submit" class="btn btn-primary mt-2">Save Model</button>
-        </form>
-
-        <!-- Select Filters to Show on User Page -->
-        <form action="/admin" method="post" class="mt-4">
-            <h4>Choose User Filters</h4>
-            <label><input type="checkbox" name="license_class" {% if filters.license_class %}checked{% endif %}> License Class</label><br>
-            <label><input type="checkbox" name="mileage_range" {% if filters.mileage_range %}checked{% endif %}> Mileage Range</label><br>
-            <label><input type="checkbox" name="coe_left_range" {% if filters.coe_left_range %}checked{% endif %}> COE Left Range</label><br>
-            <label><input type="checkbox" name="previous_owners" {% if filters.previous_owners %}checked{% endif %}> Number of Previous Owners</label><br>
-            <button type="submit" class="btn btn-success mt-2">Save Filters</button>
-        </form>
-
-        <div class="mt-4">
-            <h3>Model Dependencies</h3>
-            <div class="card">
-                <div class="card-body">
-                    <h5>Required Python Packages:</h5>
-                    <ul>
-                        <li><strong>scikit-learn</strong>: Required for Random Forest models</li>
-                        <li><strong>xgboost</strong>: Required for XGBoost models (Install: <code>pip install xgboost</code>)</li>
-                        <li><strong>lightgbm</strong>: Required for LightGBM models (Install: <code>pip install lightgbm</code>)</li>
-                        <li><strong>numpy</strong>: Required for all models</li>
-                        <li><strong>joblib</strong>: Required for loading saved models</li>
-                    </ul>
-                    <p>If certain models do not appear in the dropdown, ensure their dependencies are installed.</p>
+                        <!-- Model Selection Form -->
+                        <form action="/update_model" method="post">
+                            <label for="model">Active ML Model:</label>
+                            <select id="model" name="model" class="form-control mb-3">
+                                <!-- Options populated dynamically -->
+                            </select>
+                            <button type="submit" class="btn btn-primary btn-block">Update Model</button>
+                        </form>
+                        
+                        <hr>
+                        
+                        <!-- User Filters Form -->
+                        <h5 class="mt-3">User Interface Controls</h5>
+                        <form action="/admin" method="post">
+                            <h6>Active User Filters:</h6>
+                            <div class="custom-control custom-switch mb-2">
+                                <input type="checkbox" class="custom-control-input" id="license_class_switch" name="license_class" {% if filters.license_class %}checked{% endif %}>
+                                <label class="custom-control-label" for="license_class_switch">License Class</label>
+                            </div>
+                            <div class="custom-control custom-switch mb-2">
+                                <input type="checkbox" class="custom-control-input" id="mileage_range_switch" name="mileage_range" {% if filters.mileage_range %}checked{% endif %}>
+                                <label class="custom-control-label" for="mileage_range_switch">Mileage Range</label>
+                            </div>
+                            <div class="custom-control custom-switch mb-2">
+                                <input type="checkbox" class="custom-control-input" id="coe_left_range_switch" name="coe_left_range" {% if filters.coe_left_range %}checked{% endif %}>
+                                <label class="custom-control-label" for="coe_left_range_switch">COE Left Range</label>
+                            </div>
+                            <div class="custom-control custom-switch mb-2">
+                                <input type="checkbox" class="custom-control-input" id="previous_owners_switch" name="previous_owners" {% if filters.previous_owners %}checked{% endif %}>
+                                <label class="custom-control-label" for="previous_owners_switch">Number of Previous Owners</label>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-block mt-3">Save Settings</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- System Status -->
+                <div class="card mt-3">
+                    <div class="card-header bg-secondary text-white">
+                        <h5>System Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>System Load:</span>
+                            <span class="badge badge-success" id="system-load">Low</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Total Predictions:</span>
+                            <span class="badge badge-primary" id="prediction-count">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Last Retrained:</span>
+                            <span class="badge badge-info" id="last-retrained">Never</span>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm btn-block mt-3" id="refresh-stats-btn">
+                            <i class="fas fa-sync-alt"></i> Refresh Stats
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content / Visualizations -->
+            <div class="col-md-9">
+                <!-- Performance Metrics Row -->
+                <div class="row">
+                    <div class="col-12">
+                        <h3>Model Performance Metrics</h3>
+                        <p class="text-muted">Overview of the currently selected model's performance on test data</p>
+                    </div>
+                    <!-- Metric Cards -->
+                    <div class="col-md-3">
+                        <div class="metric-card bg-light">
+                            <div class="metric-value text-primary" id="mae-value">N/A</div>
+                            <div class="metric-label">Mean Absolute Error</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card bg-light">
+                            <div class="metric-value text-danger" id="rmse-value">N/A</div>
+                            <div class="metric-label">Root Mean Squared Error</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card bg-light">
+                            <div class="metric-value text-success" id="r2-value">N/A</div>
+                            <div class="metric-label">R² Score</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card bg-light">
+                            <div class="metric-value text-info" id="accuracy-value">N/A</div>
+                            <div class="metric-label">Prediction Accuracy</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Visualization Tabs -->
+                <ul class="nav nav-tabs mt-4" id="visualizationTabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="overview-tab" data-toggle="tab" href="#overview" role="tab">
+                            Overview
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="comparison-tab" data-toggle="tab" href="#comparison" role="tab">
+                            Model Comparison
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="features-tab" data-toggle="tab" href="#features" role="tab">
+                            Feature Analysis
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="market-tab" data-toggle="tab" href="#market" role="tab">
+                            Market Trends
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Visualization Tab Content -->
+                <div class="tab-content" id="visualizationTabContent">
+                    <!-- Overview Tab -->
+                    <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                        <div class="row mt-3">
+                            <!-- Actual vs Predicted Plot -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>Actual vs Predicted Prices</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="actualVsPredictedChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Error Distribution -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>Error Distribution</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="errorDistributionChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Residual Plot -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>Residual Analysis</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="residualPlotChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Price Range Distribution -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>Price Range Distribution</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="priceDistributionChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Model Comparison Tab -->
+                    <div class="tab-pane fade" id="comparison" role="tabpanel">
+                        <div class="row mt-3">
+                            <!-- MAE Comparison -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>MAE Comparison</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="maeComparisonChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- RMSE Comparison -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>RMSE Comparison</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="rmseComparisonChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- R2 Comparison -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>R² Score Comparison</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="r2ComparisonChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Training Time Comparison -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>Training Time Comparison</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="trainingTimeChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Feature Analysis Tab -->
+                    <div class="tab-pane fade" id="features" role="tabpanel">
+                        <div class="row mt-3">
+                            <!-- Feature Importance (for applicable models) -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>Feature Importance</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="featureImportanceChart"></canvas>
+                                        </div>
+                                        <p class="text-muted mt-2">
+                                            <small>*Note: Feature importance may not be directly available for SVM models</small>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Correlation Matrix -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>Feature Correlation</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="correlationChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Engine Size vs Price -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>Engine Size vs Price</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="engineSizeChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Mileage vs Price -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>Mileage vs Price</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="mileageChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Market Trends Tab -->
+                    <div class="tab-pane fade" id="market" role="tabpanel">
+                        <div class="row mt-3">
+                            <!-- COE Price Trend -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>COE Price Trend</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="coeTrendChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Price Trend by Brand -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>Price by Brand</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="brandPriceChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Price Trend by Year -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>Price Trend by Year</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="yearPriceChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- COE Effect on Used Market -->
+                            <div class="col-md-6">
+                                <div class="card visualization-card">
+                                    <div class="card-header">
+                                        <h5>COE Effect on Used Market</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="coeEffectChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-        // Load model status and dynamically populate the dropdown
-        function loadModelStatus() {
-            $.get("/model_status", function(data) {
-                let availableModels = data.available_models || [];
-                let selectedModel = data.selected_model || "";
+        $(document).ready(function() {
+            // Load model status
+            function loadModelStatus() {
+                $.get("/model_status", function(data) {
+                    let availableModels = data.available_models || [];
+                    let selectedModel = data.selected_model || "";
 
-                $("#model").empty();
+                    $("#model").empty();
 
-                if (availableModels.length > 0) {
-                    availableModels.forEach(function(model) {
-                        let option = $("<option></option>")
-                            .attr("value", model)
-                            .text(model === "SVM" ? "Support Vector Machine" : model);
+                    if (availableModels.length > 0) {
+                        availableModels.forEach(function(model) {
+                            let option = $("<option></option>")
+                                .attr("value", model)
+                                .text(model === "svm" ? "Support Vector Machine" : 
+                                     (model === "random_forest" ? "Random Forest" : 
+                                     (model === "lightgbm" ? "LightGBM" : 
+                                     (model === "xgboost" ? "XGBoost" : model))));
 
-                        if (model === selectedModel) {
-                            option.attr("selected", "selected");
-                        }
+                            if (model === selectedModel) {
+                                option.attr("selected", "selected");
+                            }
 
-                        $("#model").append(option);
-                    });
+                            $("#model").append(option);
+                        });
 
-                    $("#model-status-alert")
-                        .removeClass("alert-info alert-warning alert-danger")
-                        .addClass("alert-success")
-                        .text(`${availableModels.length} models available. Currently using: ${selectedModel}`);
-                } else {
+                        $("#model-status-alert")
+                            .removeClass("alert-info alert-warning alert-danger")
+                            .addClass("alert-success")
+                            .text(`${availableModels.length} models available. Currently using: ${selectedModel}`);
+                    } else {
+                        $("#model-status-alert")
+                            .removeClass("alert-info alert-success")
+                            .addClass("alert-danger")
+                            .text("No ML models could be loaded. Please check the dependencies.");
+                    }
+                    
+                    // After loading model status, load performance metrics
+                    loadPerformanceMetrics(selectedModel);
+                })
+                .fail(function() {
                     $("#model-status-alert")
                         .removeClass("alert-info alert-success")
                         .addClass("alert-danger")
-                        .text("No ML models could be loaded. Please check the dependencies.");
+                        .text("Error loading model information. Please check server logs.");
+                });
+            }
+            
+            // Load performance metrics (placeholder function - would be implemented in the Flask app)
+            function loadPerformanceMetrics(model) {
+                // This would be an AJAX call to get metrics from the server
+                // For now, we'll use placeholder data
+                const metrics = {
+                    "svm": {
+                        mae: 1250.45,
+                        rmse: 1850.32,
+                        r2: 0.87,
+                        accuracy: 89.5
+                    },
+                    "random_forest": {
+                        mae: 1100.23,
+                        rmse: 1720.91,
+                        r2: 0.89,
+                        accuracy: 91.2
+                    },
+                    "xgboost": {
+                        mae: 980.76,
+                        rmse: 1540.18,
+                        r2: 0.91,
+                        accuracy: 93.5
+                    },
+                    "lightgbm": {
+                        mae: 1050.12,
+                        rmse: 1650.45,
+                        r2: 0.90,
+                        accuracy: 92.8
+                    }
+                };
+                
+                // Update metric cards with data for the selected model
+                const modelKey = model || "svm";
+                if (metrics[modelKey]) {
+                    $("#mae-value").text(`$${metrics[modelKey].mae.toFixed(2)}`);
+                    $("#rmse-value").text(`$${metrics[modelKey].rmse.toFixed(2)}`);
+                    $("#r2-value").text(`${metrics[modelKey].r2.toFixed(2)}`);
+                    $("#accuracy-value").text(`${metrics[modelKey].accuracy.toFixed(1)}%`);
                 }
-            })
-            .fail(function() {
-                $("#model-status-alert")
-                    .removeClass("alert-info alert-success")
-                    .addClass("alert-danger")
-                    .text("Error loading model information. Please check server logs.");
-            });
-        }
-
-        $(document).ready(function() {
+                
+                // Initialize or update charts
+                initializeCharts(modelKey);
+            }
+            
+            // Initialize charts with data
+            function initializeCharts(modelKey) {
+                // Chart color scheme
+                const colors = {
+                    blue: 'rgba(54, 162, 235, 0.7)',
+                    blueLight: 'rgba(54, 162, 235, 0.3)',
+                    red: 'rgba(255, 99, 132, 0.7)',
+                    redLight: 'rgba(255, 99, 132, 0.3)',
+                    green: 'rgba(75, 192, 192, 0.7)',
+                    greenLight: 'rgba(75, 192, 192, 0.3)',
+                    orange: 'rgba(255, 159, 64, 0.7)',
+                    orangeLight: 'rgba(255, 159, 64, 0.3)',
+                    purple: 'rgba(153, 102, 255, 0.7)',
+                    purpleLight: 'rgba(153, 102, 255, 0.3)'
+                };
+                
+                // Actual vs Predicted Chart
+                const actualVsPredictedCtx = document.getElementById('actualVsPredictedChart').getContext('2d');
+                new Chart(actualVsPredictedCtx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Motorcycle Prices',
+                            data: generateScatterData(30, 5000, 20000, 5000, 20000),
+                            backgroundColor: colors.blue,
+                            borderColor: colors.blue
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Actual Price ($)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Predicted Price ($)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Actual vs Predicted Prices'
+                            }
+                        }
+                    }
+                });
+                
+                // Error Distribution Chart
+                const errorDistributionCtx = document.getElementById('errorDistributionChart').getContext('2d');
+                new Chart(errorDistributionCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['-2000', '-1500', '-1000', '-500', '0', '500', '1000', '1500', '2000'],
+                        datasets: [{
+                            label: 'Frequency',
+                            data: [2, 5, 10, 15, 20, 15, 10, 5, 2],
+                            backgroundColor: colors.green
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Prediction Error ($)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Frequency'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Distribution of Prediction Errors'
+                            }
+                        }
+                    }
+                });
+                
+                // MAE Comparison Chart
+                const maeComparisonCtx = document.getElementById('maeComparisonChart').getContext('2d');
+                new Chart(maeComparisonCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
+                        datasets: [{
+                            label: 'Mean Absolute Error ($)',
+                            data: [1250.45, 1100.23, 980.76, 1050.12],
+                            backgroundColor: [
+                                colors.blue,
+                                colors.green,
+                                colors.orange,
+                                colors.purple
+                            ]
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'MAE Comparison (Lower is Better)'
+                            }
+                        }
+                    }
+                });
+                
+                // RMSE Comparison Chart
+                const rmseComparisonCtx = document.getElementById('rmseComparisonChart').getContext('2d');
+                new Chart(rmseComparisonCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
+                        datasets: [{
+                            label: 'Root Mean Squared Error ($)',
+                            data: [1850.32, 1720.91, 1540.18, 1650.45],
+                            backgroundColor: [
+                                colors.blue,
+                                colors.green,
+                                colors.orange,
+                                colors.purple
+                            ]
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'RMSE Comparison (Lower is Better)'
+                            }
+                        }
+                    }
+                });
+                
+                // R2 Comparison Chart
+                const r2ComparisonCtx = document.getElementById('r2ComparisonChart').getContext('2d');
+                new Chart(r2ComparisonCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
+                        datasets: [{
+                            label: 'R² Score',
+                            data: [0.87, 0.89, 0.91, 0.90],
+                            backgroundColor: [
+                                colors.blue,
+                                colors.green,
+                                colors.orange,
+                                colors.purple
+                            ]
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                min: 0.8,
+                                max: 1.0
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'R² Score Comparison (Higher is Better)'
+                            }
+                        }
+                    }
+                });
+                
+                // COE Price Trend Chart
+                const coeTrendCtx = document.getElementById('coeTrendChart').getContext('2d');
+                new Chart(coeTrendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                        datasets: [{
+                            label: '2024 COE Prices',
+                            data: [76000, 78500, 80100, 82400, 84000, 82500, 81000, 79500, 77000, 75500, 74000, 73000],
+                            backgroundColor: colors.blueLight,
+                            borderColor: colors.blue,
+                            fill: true
+                        }, {
+                            label: '2023 COE Prices',
+                            data: [70000, 71500, 72800, 74200, 75500, 74000, 72500, 71000, 69500, 68000, 67000, 66000],
+                            backgroundColor: colors.redLight,
+                            borderColor: colors.red,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'COE Price (SGD)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Monthly COE Price Trends'
+                            }
+                        }
+                    }
+                });
+                
+                // COE Effect on Used Market Chart
+                const coeEffectCtx = document.getElementById('coeEffectChart').getContext('2d');
+                new Chart(coeEffectCtx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Motorcycle Resale Values',
+                            data: generateScatterData(40, 60000, 90000, 8000, 15000),
+                            backgroundColor: colors.purple
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'COE Price (SGD)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Used Motorcycle Price (SGD)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Correlation: COE Prices vs Used Motorcycle Prices'
+                            }
+                        }
+                    }
+                });
+                
+                // Initialize other charts as needed
+                initializeRemainingCharts(colors);
+            }
+            
+            // Generate random scatter data for demo
+            function generateScatterData(count, minX, maxX, minY, maxY) {
+                const data = [];
+                for (let i = 0; i < count; i++) {
+                    data.push({
+                        x: minX + (Math.random() * (maxX - minX)),
+                        y: minY + (Math.random() * (maxY - minY))
+                    });
+                }
+                return data;
+            }
+            
+            // Initialize remaining charts
+            function initializeRemainingCharts(colors) {
+                // Initialize placeholder charts for the remaining slots
+                // These would be populated with real data in a production environment
+                
+                // Residual Plot Chart
+                const residualPlotCtx = document.getElementById('residualPlotChart').getContext('2d');
+                new Chart(residualPlotCtx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Residuals',
+                            data: generateScatterData(30, 5000, 20000, -2000, 2000),
+                            backgroundColor: colors.red
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Predicted Price ($)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Residual (Actual - Predicted)'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Price Distribution Chart
+                const priceDistributionCtx = document.getElementById('priceDistributionChart').getContext('2d');
+                new Chart(priceDistributionCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['0-5K', '5K-10K', '10K-15K', '15K-20K', '20K-25K', '25K+'],
+                        datasets: [{
+                            label: 'Number of Motorcycles',
+                            data: [5, 15, 25, 20, 10, 5],
+                            backgroundColor: colors.green
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Price Range (SGD)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Frequency'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Initialize more charts as needed for other tabs
+            }
+            
+            // Load model status on page load
             loadModelStatus();
+            
+            // Refresh stats button click handler
+            $("#refresh-stats-btn").click(function() {
+                // This would reload stats from the server
+                $(this).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...');
+                setTimeout(() => {
+                    $(this).html('<i class="fas fa-sync-alt"></i> Refresh Stats');
+                    // Update some values to show activity
+                    let count = parseInt($("#prediction-count").text()) || 0;
+                    $("#prediction-count").text(count + Math.floor(Math.random() * 10));
+                    $("#last-retrained").text(new Date().toLocaleDateString());
+                }, 1000);
+            });
         });
     </script>
 </body>

@@ -6,81 +6,277 @@
     <title>User | Motorbike Price Prediction</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <style>
+        .prediction-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .prediction-card:hover {
+            transform: translateY(-5px);
+        }
+        .form-container {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .price-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .coe-slider-container {
+            padding: 10px 0;
+        }
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            color: #6c757d;
+            font-size: 12px;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark">
-        <a class="navbar-brand">Motorbike Price Prediction</a>
+        <a class="navbar-brand"><i class="fas fa-motorcycle mr-2"></i> Motorbike Price Prediction</a>
         <form action="/logout" method="post">
-            <button class="btn btn-warning">Logout</button>
+            <button class="btn btn-warning"><i class="fas fa-sign-out-alt mr-1"></i> Logout</button>
         </form>
     </nav>
 
-    <div class="container">
-        <h2 class="mt-4">Find Predicted Prices</h2>
+    <div class="container py-4">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
-        <form method="POST" action="/user">
-            <div id="filter-options">
-                <!-- Filters will be dynamically loaded here -->
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="fas fa-calculator mr-2"></i> Find Predicted Motorcycle Price</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="/user" id="prediction-form">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div id="filter-options" class="form-container">
+                                        <!-- Filters will be dynamically loaded here -->
+                                        <div class="text-center py-4">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="sr-only">Loading...</span>
+                                            </div>
+                                            <p class="mt-2">Loading input options...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    {% if prediction %}
+                                    <div class="prediction-card bg-light p-4 text-center h-100 d-flex align-items-center justify-content-center">
+                                        <div>
+                                            <h3 class="text-primary mb-3">Predicted Price</h3>
+                                            <div class="price-display mb-3">SGD {{ prediction | round(2) | int }}</div>
+                                            <p class="text-muted">Based on {{ input_details.coe_left_range }} years of COE remaining</p>
+                                            <div class="mt-4">
+                                                <button type="submit" class="btn btn-success btn-lg">
+                                                    <i class="fas fa-sync-alt mr-2"></i> Update Prediction
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="prediction-card bg-light p-4 text-center h-100 d-flex align-items-center justify-content-center">
+                                        <div>
+                                            <img src="https://cdn3.iconfinder.com/data/icons/motorcycle-filled-outline/64/motorcycle-frontview-vehicle-transportation-motorbike-512.png" 
+                                                alt="Motorcycle" style="width: 100px; opacity: 0.7;" class="mb-4">
+                                            <h3 class="text-muted mb-3">Enter details to get a price prediction</h3>
+                                            <button type="submit" class="btn btn-primary btn-lg">
+                                                <i class="fas fa-calculator mr-2"></i> Get Predicted Price
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                {% if prediction %}
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h4 class="mb-0"><i class="fas fa-info-circle mr-2"></i> Input Details</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-hover">
+                                    <tbody>
+                                        {% if input_details.license_class %}
+                                        <tr>
+                                            <th scope="row">License Class:</th>
+                                            <td>{{ input_details.license_class }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        
+                                        {% if input_details.mileage_range %}
+                                        <tr>
+                                            <th scope="row">Mileage Range:</th>
+                                            <td>{{ input_details.mileage_range }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        
+                                        {% if input_details.coe_left_range %}
+                                        <tr>
+                                            <th scope="row">COE Years Left:</th>
+                                            <td>{{ input_details.coe_left_range }} years</td>
+                                        </tr>
+                                        {% endif %}
+                                        
+                                        {% if input_details.previous_owners %}
+                                        <tr>
+                                            <th scope="row">Previous Owners:</th>
+                                            <td>{{ input_details.previous_owners }}</td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <h5><i class="fas fa-lightbulb mr-2"></i> Did you know?</h5>
+                                    <p>COE (Certificate of Entitlement) remaining years is one of the most significant factors affecting motorcycle pricing in Singapore.</p>
+                                    <p class="mb-0">Try adjusting the COE slider to see how it impacts the predicted price!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
-            <button type="submit" class="btn btn-primary mt-3">Get Predicted Price</button>
-        </form>
-
-        {% if prediction %}
-        <div class="mt-4">
-            <h3>Predicted Prices Based on Your Input</h3>
-            <p>Class: {{ license_class }}</p>
-            <p>Mileage range: {{ mileage_range }} km</p>
-            <p>COE remaining: {{ coe_left_range }} years</p>
-            <p>Number of previous owners: {{ previous_owners }}</p>
-            <h3>💰 Predicted Price: SGD {{ prediction | round(2) }}</h3>
         </div>
-        {% endif %}
     </div>
 
     <script>
-        $(document).ready(function() {
+    $(document).ready(function() {
+        // Only load filters if they're not already loaded
+        if ($("#filter-options").children().length <= 1) {
             $.get("/get_filters", function(filters) {
                 let filterHTML = "";
 
                 if (filters.license_class) {
-                    filterHTML += `<label>License Class:</label>
+                    filterHTML += `<div class="form-group">
+                        <label><i class="fas fa-id-card mr-1"></i> License Class:</label>
                         <select name="license_class" class="form-control">
-                            <option value="2b">2b</option>
-                            <option value="2a">2a</option>
+                            <option value="2B">2B</option>
+                            <option value="2A">2A</option>
                             <option value="2">2</option>
-                        </select><br>`;
+                        </select>
+                    </div>`;
                 }
 
                 if (filters.mileage_range) {
-                    filterHTML += `<label>Mileage Range:</label>
+                    filterHTML += `<div class="form-group">
+                        <label><i class="fas fa-tachometer-alt mr-1"></i> Mileage Range:</label>
                         <select name="mileage_range" class="form-control">
-                            <option value="1000-5000">1,000-5,000km</option>
-                            <option value="5000-10000">5,000-10,000km</option>
-                            <option value="10000-20000">10,000-20,000km</option>
-                        </select><br>`;
+                            <option value="< 10,000km">< 10,000km</option>
+                            <option value="< 25,000km">< 25,000km</option>
+                            <option value="< 50,000km">< 50,000km</option>
+                            <option value="< 75,000km">< 75,000km</option>
+                            <option value="> 100,000km">> 100,000km</option>
+                        </select>
+                    </div>`;
                 }
 
                 if (filters.coe_left_range) {
-                    filterHTML += `<label>COE Left:</label>
-                        <select name="coe_left_range" class="form-control">
-                            <option value="1-2">1-2 years</option>
-                            <option value="3-4">3-4 years</option>
-                            <option value="5-6">5-6 years</option>
-                        </select><br>`;
+                    filterHTML += `<div class="form-group coe-slider-container">
+                        <label><i class="fas fa-calendar-alt mr-1"></i> COE Years Left: <span id="coe-value" class="font-weight-bold">5</span> years</label>
+                        <input type="range" name="coe_left_range" class="form-control-range" 
+                            min="0" max="10" step="0.5" value="5" 
+                            oninput="document.getElementById('coe-value').textContent = this.value">
+                        <div class="slider-labels">
+                            <span>0</span>
+                            <span>5</span>
+                            <span>10</span>
+                        </div>
+                    </div>`;
                 }
 
                 if (filters.previous_owners) {
-                    filterHTML += `<label>Previous Owners:</label>
+                    filterHTML += `<div class="form-group">
+                        <label><i class="fas fa-users mr-1"></i> Previous Owners:</label>
                         <select name="previous_owners" class="form-control">
                             <option value="1">1</option>
                             <option value="2">2</option>
                             <option value="3">3 or more</option>
-                        </select><br>`;
+                        </select>
+                    </div>`;
+                }
+
+                if (filterHTML === "") {
+                    filterHTML = `<div class="alert alert-warning">
+                        No input filters have been enabled by the administrator.
+                    </div>`;
+                } else {
+                    // Add a hidden field for reg_year_range with a default value
+                    filterHTML += `<input type="hidden" name="reg_year_range" value="2021-2025">`;
                 }
 
                 $("#filter-options").html(filterHTML);
+                
+                // Set initial value for COE slider
+                if (document.getElementById('coe-value')) {
+                    const slider = document.querySelector('input[name="coe_left_range"]');
+                    if (slider) {
+                        document.getElementById('coe-value').textContent = slider.value;
+                    }
+                }
+                
+                // Restore form values if prediction exists
+                {% if prediction %}
+                    // Set license class
+                    if ($('select[name="license_class"]').length) {
+                        $('select[name="license_class"]').val("{{ input_details.license_class }}");
+                    }
+                    
+                    // Set mileage range
+                    if ($('select[name="mileage_range"]').length) {
+                        $('select[name="mileage_range"]').val("{{ input_details.mileage_range }}");
+                    }
+                    
+                    // Set COE slider
+                    if ($('input[name="coe_left_range"]').length) {
+                        $('input[name="coe_left_range"]').val("{{ input_details.coe_left_range }}");
+                        $('#coe-value').text("{{ input_details.coe_left_range }}");
+                    }
+                    
+                    // Set previous owners
+                    if ($('select[name="previous_owners"]').length) {
+                        $('select[name="previous_owners"]').val("{{ input_details.previous_owners }}");
+                    }
+                {% endif %}
             });
-        });
+        }
+    });
     </script>
 </body>
 </html>

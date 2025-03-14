@@ -1,5 +1,5 @@
 """
-Script to install required dependencies for the ML Train Delay Prediction project
+Script to install required dependencies for the Motorcycle Price Prediction project
 """
 import sys
 import subprocess
@@ -25,18 +25,23 @@ def install_package(package_name):
         return False
 
 def main():
-    # Define required packages
+    # Define required packages for motorcycle price prediction
     required_packages = {
-        "scikit-learn": "sklearn",
-        "numpy": "numpy",
-        "joblib": "joblib",
-        "flask": "flask",
-        "pandas": "pandas",
-        "xgboost": "xgboost",
-        "lightgbm": "lightgbm"
+        "scikit-learn": "sklearn",         # For SVM and other ML models
+        "numpy": "numpy",                  # For numerical operations
+        "pandas": "pandas",                # For data manipulation
+        "matplotlib": "matplotlib",        # For visualization
+        "seaborn": "seaborn",              # For enhanced visualization
+        "joblib": "joblib",                # For saving/loading models
+        "flask": "flask",                  # For web application
+        "xgboost": "xgboost",              # For XGBoost model
+        "lightgbm": "lightgbm",            # For LightGBM model
+        "openpyxl": "openpyxl",            # For Excel file handling
+        "requests": "requests",            # For web scraping
+        "beautifulsoup4": "bs4"            # For web scraping
     }
     
-    print("Checking for required dependencies...")
+    print("Checking for required dependencies for motorcycle price prediction...")
     missing_packages = []
     
     # Check which packages are missing
@@ -69,8 +74,40 @@ def main():
         project_dir = os.path.dirname(os.path.abspath(__file__))
         
         # Path to the Flask application
-        flask_app_path = os.path.join(project_dir, "FLASKAPP", "app.py")
+        flask_app_path = os.path.join(project_dir, "FLASKAPP", "app_v2.py")
         
+        if not os.path.exists(flask_app_path):
+            print(f"⚠️ Application file not found at {flask_app_path}")
+            flask_app_path = os.path.join(project_dir, "app_v2.py")
+            if not os.path.exists(flask_app_path):
+                print(f"⚠️ Application file also not found at {flask_app_path}")
+                app_files = []
+                for root, dirs, files in os.walk(project_dir):
+                    for file in files:
+                        if file.startswith("app") and file.endswith(".py"):
+                            app_files.append(os.path.join(root, file))
+                
+                if app_files:
+                    print("Found potential application files:")
+                    for i, file in enumerate(app_files):
+                        print(f"{i+1}. {file}")
+                    choice = input("Enter the number of the file you want to run (or 'n' to cancel): ")
+                    if choice.lower() == 'n':
+                        return
+                    try:
+                        index = int(choice) - 1
+                        if 0 <= index < len(app_files):
+                            flask_app_path = app_files[index]
+                        else:
+                            print("Invalid choice. Exiting.")
+                            return
+                    except ValueError:
+                        print("Invalid input. Exiting.")
+                        return
+                else:
+                    print("No application files found. Please run the application manually.")
+                    return
+            
         # Set PYTHONPATH to include the project directory
         env = os.environ.copy()
         if "PYTHONPATH" in env:
@@ -78,7 +115,7 @@ def main():
         else:
             env["PYTHONPATH"] = project_dir
         
-        print("Starting Flask application...")
+        print(f"Starting Flask application: {flask_app_path}")
         try:
             # Run the Flask application using python
             subprocess.run([sys.executable, flask_app_path], env=env)
