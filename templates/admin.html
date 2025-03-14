@@ -345,7 +345,7 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="chart-container">
-                                            <canvas id="engineSizeChart"></canvas>
+                                            <canvas id="engineSizePriceChart"></canvas>
                                         </div>
                                     </div>
                                 </div>
@@ -359,7 +359,7 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="chart-container">
-                                            <canvas id="mileageChart"></canvas>
+                                            <canvas id="mileagePriceChart"></canvas>
                                         </div>
                                     </div>
                                 </div>
@@ -392,7 +392,7 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="chart-container">
-                                            <canvas id="brandPriceChart"></canvas>
+                                            <canvas id="priceByBrandChart"></canvas>
                                         </div>
                                     </div>
                                 </div>
@@ -406,7 +406,7 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="chart-container">
-                                            <canvas id="yearPriceChart"></canvas>
+                                            <canvas id="priceTrendChart"></canvas>
                                         </div>
                                     </div>
                                 </div>
@@ -856,7 +856,119 @@
                         }
                     }
                 });
-                
+
+                const trainingTimeCtx = document.getElementById('trainingTimeChart').getContext('2d');
+            new Chart(trainingTimeCtx, {
+        type: 'bar',
+        data: {
+            labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
+            datasets: [{
+                label: 'Training Time (seconds)',
+                data: [12.5, 4.3, 8.1, 6.9], // Replace with actual training times
+                backgroundColor: ['red', 'green', 'blue', 'purple']
+            }]
+        }
+    });
+
+    const featureImportanceCtx = document.getElementById('featureImportanceChart').getContext('2d');
+    new Chart(featureImportanceCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Engine Size', 'Mileage', 'COE Expiry Date', 'Number of Owners'],
+            datasets: [{
+                label: 'Feature Importance',
+                data: [0.45, 0.30, 0.15, 0.10], // Replace with actual importance scores
+                backgroundColor: ['blue', 'orange', 'green', 'red']
+            }]
+        }
+    });
+
+    const featureCorrelationCtx = document.getElementById('correlationChart').getContext('2d');
+    new Chart(featureCorrelationCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Engine Size', 'Mileage', 'COE Expiry Date', 'Number of Owners'],
+            datasets: [{
+                label: 'Correlation',
+                data: [0.8, 0.6, 0.4, 0.2], // Replace with real correlation values
+                backgroundColor: ['blue', 'orange', 'green', 'red']
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    min: -1,
+                    max: 1,
+                    title: {
+                        display: true,
+                        text: 'Correlation Coefficient'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Feature Correlation with Price'
+                }
+            }
+        }
+    });
+    const engineSizePriceCtx = document.getElementById('engineSizePriceChart').getContext('2d');
+    new Chart(engineSizePriceCtx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Engine Size vs Price',
+                data: [
+                    { x: 150, y: 5000 }, { x: 300, y: 8000 },
+                    { x: 600, y: 12000 }, { x: 1000, y: 20000 }
+                ], // Replace with actual data
+                backgroundColor: 'blue'
+            }]
+        }
+    });
+
+    const mileagePriceCtx = document.getElementById('mileagePriceChart').getContext('2d');
+    new Chart(mileagePriceCtx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Mileage vs Price',
+                data: [
+                    { x: 5000, y: 7000 }, { x: 15000, y: 6000 },
+                    { x: 30000, y: 4500 }, { x: 60000, y: 3000 }
+                ], // Replace with actual data
+                backgroundColor: 'orange'
+            }]
+        }
+    });
+
+    const priceByBrandCtx = document.getElementById('priceByBrandChart').getContext('2d');
+    new Chart(priceByBrandCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Yamaha', 'Honda', 'Kawasaki', 'BMW'],
+            datasets: [{
+                label: 'Average Price (SGD)',
+                data: [8000, 9000, 12000, 15000], // Replace with actual prices
+                backgroundColor: ['red', 'blue', 'green', 'purple']
+            }]
+        }
+    });
+
+    const priceTrendCtx = document.getElementById('priceTrendChart').getContext('2d');
+    new Chart(priceTrendCtx, {
+        type: 'line',
+        data: {
+            labels: ['2015', '2016', '2017', '2018', '2019', '2020'],
+            datasets: [{
+                label: 'Average Resale Price (SGD)',
+                data: [7000, 7200, 7500, 7800, 8000, 8500], // Replace with actual trend data
+                borderColor: 'blue',
+                fill: false
+            }]
+        }
+    });
                 // Initialize more charts as needed for other tabs
             }
             
