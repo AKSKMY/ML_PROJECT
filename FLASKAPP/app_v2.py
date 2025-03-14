@@ -98,7 +98,7 @@ model_metrics_cache = {}
 def load_dataset(sample=False):
     """Try to load the motorcycle dataset for analysis"""
     # Look for dataset files in common locations
-    dataset_names = ["combined_dataset_latest.xlsx", "Latest_Dataset.xlsx", "bike_data.xlsx"]
+    dataset_names = ["combined_dataset_latest.xlsx"]
     search_dirs = [
         os.path.join(parent_dir, "Datasets"),
         os.path.join(parent_dir, "NewStuff"),
@@ -112,36 +112,30 @@ def load_dataset(sample=False):
             if os.path.exists(potential_path):
                 try:
                     df = pd.read_excel(potential_path)
+
+                     # ✅ Clean 'Price' column (Remove currency symbols, keep only numbers)
+                    if "Price" in df.columns:
+                        df["Price"] = df["Price"].astype(str).str.replace(r"[^\d.]", "", regex=True)
+                        df["Price"] = pd.to_numeric(df["Price"], errors="coerce")
+
+                    # ✅ Clean 'Engine Capacity' (Remove "cc", keep only numbers)
+                    if "Engine Capacity" in df.columns:
+                        df["Engine Capacity"] = df["Engine Capacity"].astype(str).str.replace(r"[^\d.]", "", regex=True)
+                        df["Engine Capacity"] = pd.to_numeric(df["Engine Capacity"], errors="coerce")
+
+                    # ✅ Clean 'Mileage' (Remove "km", keep only numbers)
+                    if "Mileage" in df.columns:
+                        df["Mileage"] = df["Mileage"].astype(str).str.replace(r"[^\d.]", "", regex=True)
+                        df["Mileage"] = pd.to_numeric(df["Mileage"], errors="coerce")
+
                     if sample and len(df) > 100:
-                        # Return a sample for visualization purposes
                         return df.sample(n=100, random_state=42)
                     return df
                 except Exception as e:
                     print(f"⚠️ Error loading {potential_path}: {e}")
-    
-    # If no dataset is found, create a synthetic one for demo purposes
+
     print("⚠️ No dataset found. Creating synthetic data for demonstration.")
-    np.random.seed(42)
-    n_samples = 100
-    
-    # Create synthetic data
-    brands = ["Honda", "Yamaha", "Kawasaki", "Suzuki", "Ducati", "BMW", "KTM", "Triumph", "Harley-Davidson"]
-    models = ["CBR", "R1", "Ninja", "GSX-R", "Panigale", "S1000RR", "RC", "Street Triple", "Sportster"]
-    categories = ["Sport", "Naked", "Cruiser", "Touring", "Scooter"]
-    
-    data = {
-        "Brand": np.random.choice(brands, n_samples),
-        "Model": np.random.choice(models, n_samples),
-        "Engine Capacity": np.random.randint(125, 1200, n_samples),
-        "Registration Date": np.random.randint(2010, 2024, n_samples),
-        "COE Expiry Date": np.random.randint(2024, 2034, n_samples),
-        "Mileage": np.random.randint(1000, 50000, n_samples),
-        "No. of owners": np.random.randint(1, 4, n_samples),
-        "Category": np.random.choice(categories, n_samples),
-        "Price": np.random.randint(5000, 25000, n_samples)
-    }
-    
-    return pd.DataFrame(data)
+    return pd.DataFrame()
 
 def calculate_model_metrics(model_name, force_recalculate=False):
     """Calculate or retrieve metrics for a model"""
@@ -463,34 +457,54 @@ def admin_panel():
 def get_filters():
     return jsonify(admin_selected_filters)
 
-# ------------------------ MODEL API ENDPOINTS ------------------------
+#TODO ------------------------ MODEL API ENDPOINTS ------------------------
 
 @app.route('/api/chart_data')
 def api_chart_data():
-    """Fetch data dynamically from saved models"""
     try:
-        # Check if models are loaded
-        if not models:
-            print("❌ No models loaded from saved_models/")
-            return jsonify({"error": "No models found in saved_models/"}), 500
+        df = load_dataset(sample=True)  # Load dataset
+        print("🚀 DEBUG: First few rows of dataset after cleaning:")
+        print(df.head())  # Print first few rows
 
-        # Extract model training times (Example: Replace with actual recorded times)
-        training_times = {name: round(5.0, 2) for name in models.keys()}  # Example time values
+        # Print columns
+        print(f"🚀 DEBUG: Available columns: {df.columns}")
 
-        # Example feature importance (Tree-based models)
-        feature_importance = (
-            models["random_forest"].feature_importances_.tolist()
-            if "random_forest" in models else {}
-        )
+        # Print unique values in critical columns
+        if "Engine Capacity" in df.columns and "Price" in df.columns:
+            print(f"🚀 DEBUG: Unique Engine Capacity values: {df['Engine Capacity'].dropna().unique()[:10]}")
+            print(f"🚀 DEBUG: Unique Price values: {df['Price'].dropna().unique()[:10]}")
+
+        if "Mileage" in df.columns:
+            print(f"🚀 DEBUG: Unique Mileage values: {df['Mileage'].dropna().unique()[:10]}")
+
+        # Print number of rows
+        print(f"🚀 DEBUG: Number of rows in dataset: {len(df)}")
+
+        # ✅ Ensure Engine Size and Mileage are Numeric
+        engine_price_data = [
+            {"x": float(row["Engine Capacity"]), "y": float(row["Price"])}
+            for _, row in df.iterrows()
+            if pd.notna(row["Engine Capacity"]) and pd.notna(row["Price"])
+        ]
+        print(f"🚀 DEBUG: Engine Price Data (first 5): {engine_price_data[:5]}")
+
+        mileage_price_data = [
+            {"x": float(row["Mileage"]), "y": float(row["Price"])}
+            for _, row in df.iterrows()
+            if pd.notna(row["Mileage"]) and pd.notna(row["Price"])
+        ]
+        print(f"🚀 DEBUG: Mileage Price Data (first 5): {mileage_price_data[:5]}")
 
         return jsonify({
-            "training_times": training_times,
-            "feature_importance": feature_importance
+            "engine_price_data": engine_price_data,
+            "mileage_price_data": mileage_price_data
         })
 
     except Exception as e:
         print(f"❌ Error in /api/chart_data: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+
 
 @app.route('/update_model', methods=['POST'])
 def update_model():
