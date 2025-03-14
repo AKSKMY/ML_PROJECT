@@ -465,6 +465,33 @@ def get_filters():
 
 # ------------------------ MODEL API ENDPOINTS ------------------------
 
+@app.route('/api/chart_data')
+def api_chart_data():
+    """Fetch data dynamically from saved models"""
+    try:
+        # Check if models are loaded
+        if not models:
+            print("❌ No models loaded from saved_models/")
+            return jsonify({"error": "No models found in saved_models/"}), 500
+
+        # Extract model training times (Example: Replace with actual recorded times)
+        training_times = {name: round(5.0, 2) for name in models.keys()}  # Example time values
+
+        # Example feature importance (Tree-based models)
+        feature_importance = (
+            models["random_forest"].feature_importances_.tolist()
+            if "random_forest" in models else {}
+        )
+
+        return jsonify({
+            "training_times": training_times,
+            "feature_importance": feature_importance
+        })
+
+    except Exception as e:
+        print(f"❌ Error in /api/chart_data: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/update_model', methods=['POST'])
 def update_model():
     """Updates the selected model for predictions."""
