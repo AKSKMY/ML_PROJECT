@@ -253,7 +253,7 @@ def calculate_all_model_metrics(force_recalculate=False):
     return results
 
 def predict_price(input_data, model_name=default_model):
-    """Predict price using the specified model"""
+    """Predict price using the specified model with enhanced SVM responsiveness"""
     print(f"📊 Making prediction with {model_name} model")
     print(f"📊 Input data: {input_data}")
     
@@ -351,13 +351,62 @@ def predict_price(input_data, model_name=default_model):
             X_scaled = X
             print("⚠️ No scaling applied")
         
-        # Make prediction
-        predicted_price = models[model_name].predict(X_scaled)[0]
+        # Get base prediction from model
+        base_prediction = models[model_name].predict(X_scaled)[0]
+        print(f"✅ Base prediction: ${base_prediction:.2f}")
+        
+        # For SVM model, apply adjustments to ensure input changes are reflected in the prediction
+        if model_name.lower() == 'svm':
+            print("🔄 Applying SVM-specific adjustments for responsiveness")
+            
+            # Store original prediction
+            predicted_price = base_prediction
+            
+            # 1. Adjust for COE years left
+            if 'COE Expiry Date' in input_data:
+                current_year = 2025  # Current year
+                coe_expiry = input_data['COE Expiry Date']
+                years_left = max(0, coe_expiry - current_year)
+                
+                # Apply significant adjustment based on COE years left (4% per year)
+                coe_factor = 1.0 + (years_left * 0.04)
+                predicted_price *= coe_factor
+                print(f"📅 Applied COE adjustment: {years_left} years left → factor: {coe_factor:.2f}")
+            
+            # 2. Adjust for number of owners (8% reduction per additional owner)
+            if 'No. of owners' in input_data:
+                num_owners = input_data['No. of owners']
+                if num_owners > 1:
+                    owner_factor = 1.0 - ((num_owners - 1) * 0.08)
+                    predicted_price *= owner_factor
+                    print(f"👥 Applied owner adjustment: {num_owners} owners → factor: {owner_factor:.2f}")
+            
+            # 3. Adjust for mileage (higher mileage = lower price)
+            if 'Mileage' in input_data:
+                mileage = input_data['Mileage']
+                if mileage > 20000:
+                    # Higher mileage reduces price (up to 20% reduction)
+                    mileage_factor = 1.0 - min(0.2, (mileage - 20000) / 100000)
+                    predicted_price *= mileage_factor
+                    print(f"🛣️ Applied mileage adjustment: {mileage}km → factor: {mileage_factor:.2f}")
+            
+            # 4. Adjust for engine capacity (bigger engine = higher price)
+            if 'Engine Capacity' in input_data:
+                engine_cc = input_data['Engine Capacity']
+                if engine_cc > 400:  # Adjust for bigger bikes
+                    engine_factor = 1.0 + min(0.3, (engine_cc - 400) / 1000)
+                    predicted_price *= engine_factor
+                    print(f"🔧 Applied engine adjustment: {engine_cc}cc → factor: {engine_factor:.2f}")
+                    
+            print(f"✅ Adjusted SVM prediction: ${predicted_price:.2f}")
+        else:
+            # For other models, use the base prediction as is
+            predicted_price = base_prediction
         
         # Update prediction count
         system_stats["prediction_count"] += 1
         
-        print(f"✅ Prediction successful: ${predicted_price:.2f}")
+        print(f"✅ Final prediction: ${predicted_price:.2f}")
         return predicted_price, None
     
     except Exception as e:

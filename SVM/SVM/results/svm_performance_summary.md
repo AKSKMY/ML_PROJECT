@@ -16,7 +16,7 @@
 
 ## Feature Summary
 The model was trained using the following features:
-Brand, Model, Engine Capacity, Registration Date, COE Expiry Date, Mileage, No. of owners, Category
+Brand, Model, Engine_Capacity, Registration_Date, COE_Expiry_Date, Mileage, No_of_owners, Category
 
 ## Visualization Summary
 - **Actual vs Predicted**: Shows the relationship between actual and predicted motorcycle prices

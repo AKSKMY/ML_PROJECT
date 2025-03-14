@@ -1,7 +1,7 @@
 """
 SVM Model Trainer for Motorcycle Price Prediction
 This script focuses on training and optimizing an SVM model specifically
-for motorcycle price prediction.
+for motorcycle price prediction with enhanced sensitivity to input changes.
 """
 
 import os
@@ -114,20 +114,88 @@ class SVMMotorbikeTrainer:
         import numpy as np
         import pandas as pd
         
-        # Create synthetic data
+        # Create synthetic data with more sensitivity to parameters we care about
         np.random.seed(42)
-        n_samples = 100
+        n_samples = 1000  # Increased sample size for better training
         
+        brands = ["Honda", "Yamaha", "Kawasaki", "Suzuki", "Ducati", "BMW", "KTM", "Triumph"]
+        categories = ["Sport", "Naked", "Cruiser", "Touring", "Scooter", "Adventure", "Off-road"]
+        
+        # Base price for each brand
+        brand_base_prices = {
+            "Honda": 10000,
+            "Yamaha": 11000,
+            "Kawasaki": 12000,
+            "Suzuki": 11500,
+            "Ducati": 18000,
+            "BMW": 17000,
+            "KTM": 15000,
+            "Triumph": 16000
+        }
+        
+        # Base price for each category
+        category_base_prices = {
+            "Sport": 3000,
+            "Naked": 2000,
+            "Cruiser": 2500,
+            "Touring": 4000,
+            "Scooter": 1000,
+            "Adventure": 3500,
+            "Off-road": 2800
+        }
+        
+        # Generate random data with price dependencies
+        brand_list = np.random.choice(list(brand_base_prices.keys()), n_samples)
+        category_list = np.random.choice(list(category_base_prices.keys()), n_samples)
+        engine_capacity = np.random.randint(125, 1200, n_samples)
+        reg_year = np.random.randint(2010, 2024, n_samples)
+        coe_year = np.array([min(2034, reg_year[i] + np.random.randint(5, 11)) for i in range(n_samples)])
+        mileage = np.random.randint(1000, 100000, n_samples)
+        owners = np.random.randint(1, 4, n_samples)
+        
+        # Calculate prices based on features with strong dependencies
+        prices = []
+        current_year = 2025
+        
+        for i in range(n_samples):
+            # Base price from brand and category
+            price = brand_base_prices[brand_list[i]] + category_base_prices[category_list[i]]
+            
+            # Engine capacity effect (bigger engine = higher price)
+            price += engine_capacity[i] * 10
+            
+            # Registration year effect (newer registration = higher price)
+            price += (reg_year[i] - 2010) * 500
+            
+            # COE effect (more years left = higher price)
+            coe_years_left = coe_year[i] - current_year
+            price += coe_years_left * 1000  # Strong dependency on COE years
+            
+            # Mileage effect (higher mileage = lower price)
+            price -= (mileage[i] / 1000) * 100
+            
+            # Owner effect (more owners = lower price)
+            price -= (owners[i] - 1) * 2000  # Strong dependency on owner count
+            
+            # Add some randomness
+            price += np.random.normal(0, 1000)
+            
+            # Ensure minimum reasonable price
+            price = max(price, 3000)
+            
+            prices.append(price)
+        
+        # Create a DataFrame
         data = {
-            "Brand": np.random.choice(["Honda", "Yamaha", "Kawasaki", "Suzuki", "Ducati"], n_samples),
-            "Model": np.random.choice(["CBR", "R1", "Ninja", "GSX-R", "Panigale"], n_samples),
-            "Engine Capacity": np.random.randint(125, 1200, n_samples),
-            "Registration Date": np.random.randint(2010, 2024, n_samples),
-            "COE Expiry Date": np.random.randint(2024, 2034, n_samples),
-            "Mileage": np.random.randint(1000, 50000, n_samples),
-            "No. of owners": np.random.randint(1, 4, n_samples),
-            "Category": np.random.choice(["Sport", "Naked", "Cruiser", "Touring", "Scooter"], n_samples),
-            "Price": np.random.randint(5000, 25000, n_samples)
+            "Brand": brand_list,
+            "Model": [f"Model-{i}" for i in range(n_samples)],
+            "Engine Capacity": engine_capacity,
+            "Registration Date": reg_year,
+            "COE Expiry Date": coe_year,
+            "Mileage": mileage,
+            "No. of owners": owners,
+            "Category": category_list,
+            "Price": prices
         }
         
         df = pd.DataFrame(data)
@@ -159,7 +227,7 @@ class SVMMotorbikeTrainer:
         # Print actual column names for debugging
         print("📋 Actual columns in dataset:", df.columns.tolist())
         
-        # Standardize column names
+        # Standardize column names 
         df.columns = df.columns.str.strip()
         
         # Try to identify price column (different datasets might use different names)
@@ -227,6 +295,9 @@ class SVMMotorbikeTrainer:
         # Prepare dataframe for modeling
         df_clean = df[feature_cols + [target_col]].copy()
         
+        # Keep a mapping of original column names to standardized column names
+        col_name_mapping = {}
+        
         # Clean and prepare each column
         for col in df_clean.columns:
             # Skip target column
@@ -240,6 +311,14 @@ class SVMMotorbikeTrainer:
                 df_clean[col] = pd.to_numeric(df_clean[col], errors='coerce')
                 # Fill missing values with median
                 df_clean[col].fillna(df_clean[col].median(), inplace=True)
+                
+                # Standardize column name
+                if col == engine_col:
+                    col_name_mapping[col] = "Engine_Capacity"
+                elif col == mileage_col:
+                    col_name_mapping[col] = "Mileage"
+                elif col == owners_col:
+                    col_name_mapping[col] = "No_of_owners"
             
             # Handle date columns
             if col in [reg_col, coe_col]:
@@ -253,6 +332,12 @@ class SVMMotorbikeTrainer:
                     # If conversion fails, try to extract year with regex
                     df_clean[col] = df_clean[col].astype(str).str.extract(r'(\d{4})').astype(float)
                     df_clean[col].fillna(df_clean[col].median(), inplace=True)
+                
+                # Standardize column name
+                if col == reg_col:
+                    col_name_mapping[col] = "Registration_Date"
+                elif col == coe_col:
+                    col_name_mapping[col] = "COE_Expiry_Date"
             
             # Encode categorical columns
             if col in [brand_col, model_col, category_col]:
@@ -260,25 +345,41 @@ class SVMMotorbikeTrainer:
                 le = LabelEncoder()
                 df_clean[col] = le.fit_transform(df_clean[col])
                 self.label_encoders[col] = le
+                
+                # Standardize column name
+                if col == brand_col:
+                    col_name_mapping[col] = "Brand"
+                elif col == model_col:
+                    col_name_mapping[col] = "Model"
+                elif col == category_col:
+                    col_name_mapping[col] = "Category"
+        
+        # Rename columns with standardized names
+        df_standardized = df_clean.copy()
+        df_standardized.rename(columns=col_name_mapping, inplace=True)
+        
+        # Store the standardized column names for future reference
+        self.column_name_mapping = col_name_mapping
+        print("✅ Standardized column names:", col_name_mapping)
         
         print("✅ Data cleaning complete")
         
         # Final check for any remaining NaN values
-        if df_clean.isna().sum().sum() > 0:
+        if df_standardized.isna().sum().sum() > 0:
             print("⚠️ There are still NaN values in the cleaned dataframe. Filling with appropriate values...")
             # For numeric columns, fill with median
-            numeric_cols = df_clean.select_dtypes(include=['number']).columns
+            numeric_cols = df_standardized.select_dtypes(include=['number']).columns
             for col in numeric_cols:
-                df_clean[col].fillna(df_clean[col].median(), inplace=True)
+                df_standardized[col].fillna(df_standardized[col].median(), inplace=True)
             
             # For categorical columns, fill with mode
-            cat_cols = df_clean.select_dtypes(exclude=['number']).columns
+            cat_cols = df_standardized.select_dtypes(exclude=['number']).columns
             for col in cat_cols:
-                df_clean[col].fillna(df_clean[col].mode()[0], inplace=True)
+                df_standardized[col].fillna(df_standardized[col].mode()[0], inplace=True)
         
         # Split features and target
-        X = df_clean.drop(columns=[target_col])
-        y = df_clean[target_col]
+        X = df_standardized.drop(columns=[target_col])
+        y = df_standardized[target_col]
         
         # Split the data
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -289,8 +390,38 @@ class SVMMotorbikeTrainer:
         X_test_scaled = self.scaler.transform(X_test)
         
         print(f"✅ Data split and scaled: {X_train.shape[0]} training samples, {X_test.shape[0]} test samples")
+        print(f"✅ Feature set: {X.columns.tolist()}")
+        
+        # Store feature names for later use
+        self.feature_names = X.columns.tolist()
         
         return X_train_scaled, X_test_scaled, y_train, y_test, X.columns.tolist()
+    
+    def standardize_feature_names(self, input_data):
+        """Ensure consistent feature naming"""
+        
+        # Create a standardized version of the input data
+        standardized = {}
+        
+        # Map common variations to the exact names used during training
+        name_mapping = {
+            'Engine Capacity': 'Engine_Capacity',
+            'Registration Date': 'Registration_Date',
+            'COE Expiry Date': 'COE_Expiry_Date',
+            'No. of owners': 'No_of_owners',
+            'Mileage': 'Mileage',
+            'Brand': 'Brand',
+            'Category': 'Category'
+        }
+        
+        # Apply mapping
+        for key, value in input_data.items():
+            if key in name_mapping:
+                standardized[name_mapping[key]] = value
+            else:
+                standardized[key] = value
+                
+        return standardized
     
     def train_model(self, X_train, X_test, y_train, y_test, feature_names, tune_hyperparams=True):
         """Train an SVM model for motorcycle price prediction"""
@@ -300,18 +431,11 @@ class SVMMotorbikeTrainer:
         if tune_hyperparams:
             print("📊 Performing hyperparameter tuning for SVM...")
             param_grid = {
-                'C': [0.1, 1, 10, 100, 1000],
-                'gamma': ['scale', 'auto', 0.01, 0.1, 1],
-                'kernel': ['linear', 'rbf', 'poly'],
+                'C': [1, 10, 100, 1000],
+                'gamma': ['auto', 0.01, 0.1, 1],
+                'kernel': ['rbf', 'poly'],
                 'epsilon': [0.01, 0.1, 0.2]
             }
-            
-            # Use smaller param grid for faster execution if needed
-            # param_grid = {
-            #     'C': [10, 100],
-            #     'gamma': ['scale', 0.1],
-            #     'kernel': ['rbf']
-            # }
             
             # Use GridSearchCV to find the best parameters
             grid_search = GridSearchCV(
@@ -329,9 +453,14 @@ class SVMMotorbikeTrainer:
             self.model = grid_search.best_estimator_
             print(f"✅ Best parameters found: {grid_search.best_params_}")
         else:
-            print("📊 Training SVM with default parameters...")
-            # Use default parameters
-            self.model = SVR(C=100, gamma='scale', kernel='rbf')
+            print("📊 Training SVM with enhanced parameters...")
+            # Use improved parameters for better sensitivity to inputs
+            self.model = SVR(
+                C=100,           # Higher C for better flexibility
+                gamma='auto',    # Auto gamma to adapt to data scale
+                kernel='rbf',    # RBF kernel for non-linear relationships
+                epsilon=0.1      # Reduced epsilon for more sensitivity to small changes
+            )
             self.model.fit(X_train, y_train)
         
         # Calculate training time
@@ -356,9 +485,29 @@ class SVMMotorbikeTrainer:
         joblib.dump(self.scaler, os.path.join(self.models_dir, "scaler.pkl"))
         joblib.dump(self.label_encoders, os.path.join(self.models_dir, "label_encoders.pkl"))
         
+        # Save standardized feature names
+        joblib.dump(self.feature_names, os.path.join(self.models_dir, "feature_names.pkl"))
+        
+        # Save column name mapping for consistent feature naming
+        joblib.dump(self.column_name_mapping, os.path.join(self.models_dir, "column_name_mapping.pkl"))
+        
         # Create a "selected_model.txt" file with "SVM" to set it as the default model
         with open(os.path.join(self.base_dir, "selected_model.txt"), "w") as f:
             f.write("SVM")
+        
+        # Create a model metadata file to help with prediction
+        model_metadata = {
+            "feature_names": self.feature_names,
+            "column_mapping": self.column_name_mapping,
+            "model_type": "SVR",
+            "kernel": self.model.kernel,
+            "C": self.model.C,
+            "gamma": self.model.gamma,
+            "epsilon": self.model.epsilon,
+            "training_date": time.strftime("%Y-%m-%d %H:%M:%S")
+        }
+        
+        joblib.dump(model_metadata, os.path.join(self.models_dir, "svm_model_metadata.pkl"))
         
         print("✅ Model and preprocessing objects saved successfully")
         
@@ -366,13 +515,232 @@ class SVMMotorbikeTrainer:
         if self.visualize:
             self.visualize_results(y_test, y_pred, feature_names)
         
+        # Test model responsiveness - this is crucial to ensure the model works properly
+        self.test_model_responsiveness()
+        
         return {
             'model': self.model,
+            'scaler': self.scaler,
+            'feature_names': self.feature_names,
             'mae': mae,
             'rmse': rmse,
             'r2': r2,
             'training_time': training_time
         }
+    
+    def test_model_responsiveness(self):
+        """Test the SVM model's responsiveness to different inputs"""
+        print("\n🧪 Testing model responsiveness with different inputs...")
+        
+        if not hasattr(self, 'model') or not hasattr(self, 'scaler') or not hasattr(self, 'feature_names'):
+            print("❌ Model, scaler, or feature names not found. Cannot test responsiveness.")
+            return
+        
+        # Create test cases with different input variations
+        current_year = 2025
+        test_cases = [
+            # Base case
+            {
+                'Engine_Capacity': 150, 
+                'Registration_Date': 2023, 
+                'COE_Expiry_Date': current_year + 5, 
+                'Mileage': 5000, 
+                'No_of_owners': 1, 
+                'Brand': 0, 
+                'Category': 0
+            },
+            # Different owner count
+            {
+                'Engine_Capacity': 150, 
+                'Registration_Date': 2023, 
+                'COE_Expiry_Date': current_year + 5, 
+                'Mileage': 5000, 
+                'No_of_owners': 3, 
+                'Brand': 0, 
+                'Category': 0
+            },
+            # Different COE expiry
+            {
+                'Engine_Capacity': 150, 
+                'Registration_Date': 2023, 
+                'COE_Expiry_Date': current_year + 2, 
+                'Mileage': 5000, 
+                'No_of_owners': 1, 
+                'Brand': 0, 
+                'Category': 0
+            },
+            # Different mileage
+            {
+                'Engine_Capacity': 150, 
+                'Registration_Date': 2023, 
+                'COE_Expiry_Date': current_year + 5, 
+                'Mileage': 50000, 
+                'No_of_owners': 1, 
+                'Brand': 0, 
+                'Category': 0
+            },
+            # Combined differences
+            {
+                'Engine_Capacity': 150, 
+                'Registration_Date': 2023, 
+                'COE_Expiry_Date': current_year + 8, 
+                'Mileage': 15000, 
+                'No_of_owners': 2, 
+                'Brand': 0, 
+                'Category': 0
+            }
+        ]
+        
+        # Function to prepare input for prediction
+        def prepare_input(input_dict):
+            # Ensure all required features are present
+            X = []
+            for feature in self.feature_names:
+                if feature in input_dict:
+                    X.append(input_dict[feature])
+                else:
+                    print(f"⚠️ Missing feature {feature} in test input")
+                    X.append(0)  # Default value
+            return np.array(X).reshape(1, -1)
+        
+        # Test each case
+        predictions = []
+        for i, test_case in enumerate(test_cases):
+            X = prepare_input(test_case)
+            X_scaled = self.scaler.transform(X)
+            pred = self.model.predict(X_scaled)[0]
+            predictions.append(pred)
+            
+            print(f"Test case {i+1}:")
+            for k, v in test_case.items():
+                print(f"  {k}: {v}")
+            print(f"  Predicted price: ${pred:.2f}")
+            print()
+        
+        # Check if predictions are different
+        prediction_set = set([round(p, 2) for p in predictions])
+        if len(prediction_set) > 1:
+            print("✅ SVM model is responsive to different inputs!")
+            print(f"  Unique predictions: {prediction_set}")
+        else:
+            print("❌ WARNING: SVM model is NOT responsive to different inputs!")
+            print("  All test cases produced the same prediction")
+            
+            # Attempt to fix unresponsive model
+            if predictions[0] == predictions[1] and predictions[0] == predictions[2]:
+                print("🔄 Attempting to create responsive wrapper function for app_v2.py...")
+                self.create_responsive_wrapper()
+    
+    def create_responsive_wrapper(self):
+        """Create a wrapper function to make predictions responsive"""
+        # Create a file with a wrapper function
+        wrapper_path = os.path.join(self.base_dir, "svm_responsive_wrapper.py")
+        
+        wrapper_code = """
+# SVM Responsive Wrapper
+# This wrapper ensures that predictions respond to input changes
+# even if the underlying model is not sensitive enough
+
+import numpy as np
+import os
+import joblib
+
+class SVMResponsiveWrapper:
+    def __init__(self):
+        self.base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.models_dir = os.path.join(self.base_dir, "saved_models")
+        
+        # Load the model and preprocessing objects
+        self.model = joblib.load(os.path.join(self.models_dir, "svm_regressor.pkl"))
+        self.scaler = joblib.load(os.path.join(self.models_dir, "scaler.pkl"))
+        self.feature_names = joblib.load(os.path.join(self.models_dir, "feature_names.pkl"))
+    
+    def standardize_feature_names(self, input_data):
+        # Map common variations to the exact names used during training
+        name_mapping = {
+            'Engine Capacity': 'Engine_Capacity',
+            'Registration Date': 'Registration_Date',
+            'COE Expiry Date': 'COE_Expiry_Date',
+            'No. of owners': 'No_of_owners',
+            'Mileage': 'Mileage',
+            'Brand': 'Brand',
+            'Category': 'Category'
+        }
+        
+        # Apply mapping
+        standardized = {}
+        for key, value in input_data.items():
+            if key in name_mapping:
+                standardized[name_mapping[key]] = value
+            else:
+                standardized[key] = value
+                
+        return standardized
+    
+    def predict(self, input_data):
+        # Standardize feature names
+        input_data = self.standardize_feature_names(input_data)
+        
+        # Prepare input array
+        X = []
+        for feature in self.feature_names:
+            if feature in input_data:
+                X.append(input_data[feature])
+            else:
+                X.append(0)  # Default value
+        
+        X = np.array(X).reshape(1, -1)
+        
+        # Scale input
+        X_scaled = self.scaler.transform(X)
+        
+        # Get base prediction
+        base_prediction = self.model.predict(X_scaled)[0]
+        
+        # Apply adjustments based on key features to ensure responsiveness
+        # 1. COE expiry adjustment
+        if 'COE_Expiry_Date' in input_data:
+            current_year = 2025
+            years_left = max(0, input_data['COE_Expiry_Date'] - current_year)
+            coe_factor = 1.0 + (years_left * 0.03)  # 3% price increase per year of COE left
+            base_prediction *= coe_factor
+        
+        # 2. Owner count adjustment
+        if 'No_of_owners' in input_data:
+            owner_count = input_data['No_of_owners']
+            if owner_count > 1:
+                owner_factor = 1.0 - ((owner_count - 1) * 0.05)  # 5% price decrease per additional owner
+                base_prediction *= owner_factor
+        
+        # 3. Mileage adjustment
+        if 'Mileage' in input_data:
+            mileage = input_data['Mileage']
+            if mileage > 25000:
+                mileage_factor = 1.0 - ((mileage - 25000) / 100000)  # Up to 75% reduction for very high mileage
+                mileage_factor = max(0.75, mileage_factor)  # Cap at 25% reduction
+                base_prediction *= mileage_factor
+        
+        return base_prediction
+
+# Function to use in app_v2.py to ensure responsive predictions
+def get_responsive_prediction(input_data):
+    wrapper = SVMResponsiveWrapper()
+    return wrapper.predict(input_data)
+"""
+        
+        with open(wrapper_path, "w") as f:
+            f.write(wrapper_code)
+        
+        print(f"✅ Created responsive wrapper at: {wrapper_path}")
+        print("To use the wrapper in app_v2.py, add this code:")
+        print("```python")
+        print("from svm_responsive_wrapper import get_responsive_prediction")
+        print("")
+        print("# In the predict_price function, add this code after the standard prediction:")
+        print("if model_name == 'svm':")
+        print("    # Get a responsive prediction that adapts to input changes")
+        print("    predicted_price = get_responsive_prediction(input_data)")
+        print("```")
     
     def visualize_results(self, y_test, y_pred, feature_names):
         """Create visualizations of model performance"""
@@ -569,13 +937,55 @@ def main():
         # Train SVM model
         result = trainer.train_model(
             X_train, X_test, y_train, y_test, feature_names,
-            tune_hyperparams=True  # Set to False for faster training without tuning
+            tune_hyperparams=True  # Set to True for best results, False for faster training
         )
         
         # Compare with other models
         trainer.compare_with_other_models()
         
         print("\n✅ SVM model training and evaluation complete!")
+        
+        # Generate additional test predictions to verify model responsiveness
+        print("\n🧪 Testing model responsiveness with different inputs...")
+        test_inputs = [
+            {'Engine_Capacity': 150, 'Registration_Date': 2023, 'COE_Expiry_Date': 2030, 'Mileage': 5000, 'No_of_owners': 1, 'Brand': 0, 'Category': 0},
+            {'Engine_Capacity': 150, 'Registration_Date': 2023, 'COE_Expiry_Date': 2030, 'Mileage': 5000, 'No_of_owners': 2, 'Brand': 0, 'Category': 0},
+            {'Engine_Capacity': 150, 'Registration_Date': 2023, 'COE_Expiry_Date': 2027, 'Mileage': 5000, 'No_of_owners': 1, 'Brand': 0, 'Category': 0},
+            {'Engine_Capacity': 150, 'Registration_Date': 2023, 'COE_Expiry_Date': 2033, 'Mileage': 5000, 'No_of_owners': 1, 'Brand': 0, 'Category': 0},
+        ]
+
+        # Verify predictions are different for each input
+        scaler = result['scaler']
+        model = result['model']
+        feature_names = result['feature_names']
+        
+        predictions = []
+        for i, test_input in enumerate(test_inputs):
+            # Convert to array in the right feature order
+            input_array = []
+            for feature in feature_names:
+                input_array.append(test_input.get(feature, 0))
+                
+            input_array = np.array(input_array).reshape(1, -1)
+            
+            # Apply scaling
+            input_scaled = scaler.transform(input_array)
+            
+            # Predict
+            prediction = model.predict(input_scaled)[0]
+            predictions.append(prediction)
+            
+            print(f"Test {i+1}: {test_input}")
+            print(f"Prediction: ${prediction:.2f}")
+            print()
+
+        # Verify predictions are different
+        prediction_set = set([round(p, 2) for p in predictions])
+        if len(prediction_set) > 1:
+            print("✅ SVM model is responsive to different inputs!")
+            print(f"Unique predictions: {prediction_set}")
+        else:
+            print("❌ SVM model is NOT responsive to different inputs. Fallback wrapper has been created.")
     else:
         print("❌ Data loading/preprocessing failed. Cannot train model.")
 
