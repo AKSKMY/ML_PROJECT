@@ -432,562 +432,616 @@
         </div>
     </div>
 
-    <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            // Load model status
-            function loadModelStatus() {
-                $.get("/model_status", function(data) {
-                    let availableModels = data.available_models || [];
-                    let selectedModel = data.selected_model || "";
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Load model status
+        function loadModelStatus() {
+            $.get("/model_status", function(data) {
+                let availableModels = data.available_models || [];
+                let selectedModel = data.selected_model || "";
 
-                    $("#model").empty();
+                $("#model").empty();
 
-                    if (availableModels.length > 0) {
-                        availableModels.forEach(function(model) {
-                            let option = $("<option></option>")
-                                .attr("value", model)
-                                .text(model === "svm" ? "Support Vector Machine" : 
-                                     (model === "random_forest" ? "Random Forest" : 
-                                     (model === "lightgbm" ? "LightGBM" : 
-                                     (model === "xgboost" ? "XGBoost" : model))));
+                if (availableModels.length > 0) {
+                    availableModels.forEach(function(model) {
+                        let option = $("<option></option>")
+                            .attr("value", model)
+                            .text(model === "svm" ? "Support Vector Machine" : 
+                                 (model === "random_forest" ? "Random Forest" : 
+                                 (model === "lightgbm" ? "LightGBM" : 
+                                 (model === "xgboost" ? "XGBoost" : model))));
 
-                            if (model === selectedModel) {
-                                option.attr("selected", "selected");
-                            }
+                        if (model === selectedModel) {
+                            option.attr("selected", "selected");
+                        }
 
-                            $("#model").append(option);
-                        });
+                        $("#model").append(option);
+                    });
 
-                        $("#model-status-alert")
-                            .removeClass("alert-info alert-warning alert-danger")
-                            .addClass("alert-success")
-                            .text(`${availableModels.length} models available. Currently using: ${selectedModel}`);
-                    } else {
-                        $("#model-status-alert")
-                            .removeClass("alert-info alert-success")
-                            .addClass("alert-danger")
-                            .text("No ML models could be loaded. Please check the dependencies.");
-                    }
-                    
-                    // After loading model status, load performance metrics
-                    loadPerformanceMetrics(selectedModel);
-                })
-                .fail(function() {
+                    $("#model-status-alert")
+                        .removeClass("alert-info alert-warning alert-danger")
+                        .addClass("alert-success")
+                        .text(`${availableModels.length} models available. Currently using: ${selectedModel}`);
+                } else {
                     $("#model-status-alert")
                         .removeClass("alert-info alert-success")
                         .addClass("alert-danger")
-                        .text("Error loading model information. Please check server logs.");
-                });
-            }
-            
-            // Load performance metrics (placeholder function - would be implemented in the Flask app)
-            function loadPerformanceMetrics(model) {
-                // This would be an AJAX call to get metrics from the server
-                // For now, we'll use placeholder data
-                const metrics = {
-                    "svm": {
-                        mae: 1250.45,
-                        rmse: 1850.32,
-                        r2: 0.87,
-                        accuracy: 89.5
-                    },
-                    "random_forest": {
-                        mae: 1100.23,
-                        rmse: 1720.91,
-                        r2: 0.89,
-                        accuracy: 91.2
-                    },
-                    "xgboost": {
-                        mae: 980.76,
-                        rmse: 1540.18,
-                        r2: 0.91,
-                        accuracy: 93.5
-                    },
-                    "lightgbm": {
-                        mae: 1050.12,
-                        rmse: 1650.45,
-                        r2: 0.90,
-                        accuracy: 92.8
-                    }
-                };
-                
-                // Update metric cards with data for the selected model
-                const modelKey = model || "svm";
-                if (metrics[modelKey]) {
-                    $("#mae-value").text(`$${metrics[modelKey].mae.toFixed(2)}`);
-                    $("#rmse-value").text(`$${metrics[modelKey].rmse.toFixed(2)}`);
-                    $("#r2-value").text(`${metrics[modelKey].r2.toFixed(2)}`);
-                    $("#accuracy-value").text(`${metrics[modelKey].accuracy.toFixed(1)}%`);
+                        .text("No ML models could be loaded. Please check the dependencies.");
                 }
                 
-                // Initialize or update charts
-                initializeCharts(modelKey);
-            }
-            
-            // Initialize charts with data
-            function initializeCharts(modelKey) {
-                // Chart color scheme
-                const colors = {
-                    blue: 'rgba(54, 162, 235, 0.7)',
-                    blueLight: 'rgba(54, 162, 235, 0.3)',
-                    red: 'rgba(255, 99, 132, 0.7)',
-                    redLight: 'rgba(255, 99, 132, 0.3)',
-                    green: 'rgba(75, 192, 192, 0.7)',
-                    greenLight: 'rgba(75, 192, 192, 0.3)',
-                    orange: 'rgba(255, 159, 64, 0.7)',
-                    orangeLight: 'rgba(255, 159, 64, 0.3)',
-                    purple: 'rgba(153, 102, 255, 0.7)',
-                    purpleLight: 'rgba(153, 102, 255, 0.3)'
-                };
-                
-                // Actual vs Predicted Chart
-                const actualVsPredictedCtx = document.getElementById('actualVsPredictedChart').getContext('2d');
-                new Chart(actualVsPredictedCtx, {
-                    type: 'scatter',
-                    data: {
-                        datasets: [{
-                            label: 'Motorcycle Prices',
-                            data: generateScatterData(30, 5000, 20000, 5000, 20000),
-                            backgroundColor: colors.blue,
-                            borderColor: colors.blue
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Actual Price ($)'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Predicted Price ($)'
-                                }
-                            }
-                        },
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Actual vs Predicted Prices'
-                            }
-                        }
-                    }
-                });
-                
-                // Error Distribution Chart
-                const errorDistributionCtx = document.getElementById('errorDistributionChart').getContext('2d');
-                new Chart(errorDistributionCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['-2000', '-1500', '-1000', '-500', '0', '500', '1000', '1500', '2000'],
-                        datasets: [{
-                            label: 'Frequency',
-                            data: [2, 5, 10, 15, 20, 15, 10, 5, 2],
-                            backgroundColor: colors.green
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Prediction Error ($)'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Frequency'
-                                }
-                            }
-                        },
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Distribution of Prediction Errors'
-                            }
-                        }
-                    }
-                });
-                
-                // MAE Comparison Chart
-                const maeComparisonCtx = document.getElementById('maeComparisonChart').getContext('2d');
-                new Chart(maeComparisonCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
-                        datasets: [{
-                            label: 'Mean Absolute Error ($)',
-                            data: [1250.45, 1100.23, 980.76, 1050.12],
-                            backgroundColor: [
-                                colors.blue,
-                                colors.green,
-                                colors.orange,
-                                colors.purple
-                            ]
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'MAE Comparison (Lower is Better)'
-                            }
-                        }
-                    }
-                });
-                
-                // RMSE Comparison Chart
-                const rmseComparisonCtx = document.getElementById('rmseComparisonChart').getContext('2d');
-                new Chart(rmseComparisonCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
-                        datasets: [{
-                            label: 'Root Mean Squared Error ($)',
-                            data: [1850.32, 1720.91, 1540.18, 1650.45],
-                            backgroundColor: [
-                                colors.blue,
-                                colors.green,
-                                colors.orange,
-                                colors.purple
-                            ]
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'RMSE Comparison (Lower is Better)'
-                            }
-                        }
-                    }
-                });
-                
-                // R2 Comparison Chart
-                const r2ComparisonCtx = document.getElementById('r2ComparisonChart').getContext('2d');
-                new Chart(r2ComparisonCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
-                        datasets: [{
-                            label: 'R² Score',
-                            data: [0.87, 0.89, 0.91, 0.90],
-                            backgroundColor: [
-                                colors.blue,
-                                colors.green,
-                                colors.orange,
-                                colors.purple
-                            ]
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                min: 0.8,
-                                max: 1.0
-                            }
-                        },
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'R² Score Comparison (Higher is Better)'
-                            }
-                        }
-                    }
-                });
-                
-                // COE Price Trend Chart
-                const coeTrendCtx = document.getElementById('coeTrendChart').getContext('2d');
-                new Chart(coeTrendCtx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                        datasets: [{
-                            label: '2024 COE Prices',
-                            data: [76000, 78500, 80100, 82400, 84000, 82500, 81000, 79500, 77000, 75500, 74000, 73000],
-                            backgroundColor: colors.blueLight,
-                            borderColor: colors.blue,
-                            fill: true
-                        }, {
-                            label: '2023 COE Prices',
-                            data: [70000, 71500, 72800, 74200, 75500, 74000, 72500, 71000, 69500, 68000, 67000, 66000],
-                            backgroundColor: colors.redLight,
-                            borderColor: colors.red,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'COE Price (SGD)'
-                                }
-                            }
-                        },
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Monthly COE Price Trends'
-                            }
-                        }
-                    }
-                });
-                
-                // COE Effect on Used Market Chart
-                const coeEffectCtx = document.getElementById('coeEffectChart').getContext('2d');
-                new Chart(coeEffectCtx, {
-                    type: 'scatter',
-                    data: {
-                        datasets: [{
-                            label: 'Motorcycle Resale Values',
-                            data: generateScatterData(40, 60000, 90000, 8000, 15000),
-                            backgroundColor: colors.purple
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'COE Price (SGD)'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Used Motorcycle Price (SGD)'
-                                }
-                            }
-                        },
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Correlation: COE Prices vs Used Motorcycle Prices'
-                            }
-                        }
-                    }
-                });
-                
-                // Initialize other charts as needed
-                initializeRemainingCharts(colors);
-            }
-            
-            // Generate random scatter data for demo
-            function generateScatterData(count, minX, maxX, minY, maxY) {
-                const data = [];
-                for (let i = 0; i < count; i++) {
-                    data.push({
-                        x: minX + (Math.random() * (maxX - minX)),
-                        y: minY + (Math.random() * (maxY - minY))
-                    });
-                }
-                return data;
-            }
-            
-            // Initialize remaining charts
-            function initializeRemainingCharts(colors) {
-                // Initialize placeholder charts for the remaining slots
-                // These would be populated with real data in a production environment
-                
-                // Residual Plot Chart
-                const residualPlotCtx = document.getElementById('residualPlotChart').getContext('2d');
-                new Chart(residualPlotCtx, {
-                    type: 'scatter',
-                    data: {
-                        datasets: [{
-                            label: 'Residuals',
-                            data: generateScatterData(30, 5000, 20000, -2000, 2000),
-                            backgroundColor: colors.red
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Predicted Price ($)'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Residual (Actual - Predicted)'
-                                }
-                            }
-                        }
-                    }
-                });
-                
-                // Price Distribution Chart
-                const priceDistributionCtx = document.getElementById('priceDistributionChart').getContext('2d');
-                new Chart(priceDistributionCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['0-5K', '5K-10K', '10K-15K', '15K-20K', '20K-25K', '25K+'],
-                        datasets: [{
-                            label: 'Number of Motorcycles',
-                            data: [5, 15, 25, 20, 10, 5],
-                            backgroundColor: colors.green
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Price Range (SGD)'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Frequency'
-                                }
-                            }
-                        }
-                    }
-                });
-
-                const trainingTimeCtx = document.getElementById('trainingTimeChart').getContext('2d');
-            new Chart(trainingTimeCtx, {
-        type: 'bar',
-        data: {
-            labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
-            datasets: [{
-                label: 'Training Time (seconds)',
-                data: [12.5, 4.3, 8.1, 6.9], // Replace with actual training times
-                backgroundColor: ['red', 'green', 'blue', 'purple']
-            }]
-        }
-    });
-
-    const featureImportanceCtx = document.getElementById('featureImportanceChart').getContext('2d');
-    new Chart(featureImportanceCtx, {
-        type: 'bar',
-        data: {
-            labels: ['Engine Size', 'Mileage', 'COE Expiry Date', 'Number of Owners'],
-            datasets: [{
-                label: 'Feature Importance',
-                data: [0.45, 0.30, 0.15, 0.10], // Replace with actual importance scores
-                backgroundColor: ['blue', 'orange', 'green', 'red']
-            }]
-        }
-    });
-
-    const featureCorrelationCtx = document.getElementById('correlationChart').getContext('2d');
-    new Chart(featureCorrelationCtx, {
-        type: 'bar',
-        data: {
-            labels: ['Engine Size', 'Mileage', 'COE Expiry Date', 'Number of Owners'],
-            datasets: [{
-                label: 'Correlation',
-                data: [0.8, 0.6, 0.4, 0.2], // Replace with real correlation values
-                backgroundColor: ['blue', 'orange', 'green', 'red']
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    min: -1,
-                    max: 1,
-                    title: {
-                        display: true,
-                        text: 'Correlation Coefficient'
-                    }
-                }
-            },
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'Feature Correlation with Price'
-                }
-            }
-        }
-    });
-    const engineSizePriceCtx = document.getElementById('engineSizePriceChart').getContext('2d');
-    new Chart(engineSizePriceCtx, {
-        type: 'scatter',
-        data: {
-            datasets: [{
-                label: 'Engine Size vs Price',
-                data: [
-                    { x: 150, y: 5000 }, { x: 300, y: 8000 },
-                    { x: 600, y: 12000 }, { x: 1000, y: 20000 }
-                ], // Replace with actual data
-                backgroundColor: 'blue'
-            }]
-        }
-    });
-
-    const mileagePriceCtx = document.getElementById('mileagePriceChart').getContext('2d');
-    new Chart(mileagePriceCtx, {
-        type: 'scatter',
-        data: {
-            datasets: [{
-                label: 'Mileage vs Price',
-                data: [
-                    { x: 5000, y: 7000 }, { x: 15000, y: 6000 },
-                    { x: 30000, y: 4500 }, { x: 60000, y: 3000 }
-                ], // Replace with actual data
-                backgroundColor: 'orange'
-            }]
-        }
-    });
-
-    const priceByBrandCtx = document.getElementById('priceByBrandChart').getContext('2d');
-    new Chart(priceByBrandCtx, {
-        type: 'bar',
-        data: {
-            labels: ['Yamaha', 'Honda', 'Kawasaki', 'BMW'],
-            datasets: [{
-                label: 'Average Price (SGD)',
-                data: [8000, 9000, 12000, 15000], // Replace with actual prices
-                backgroundColor: ['red', 'blue', 'green', 'purple']
-            }]
-        }
-    });
-
-    const priceTrendCtx = document.getElementById('priceTrendChart').getContext('2d');
-    new Chart(priceTrendCtx, {
-        type: 'line',
-        data: {
-            labels: ['2015', '2016', '2017', '2018', '2019', '2020'],
-            datasets: [{
-                label: 'Average Resale Price (SGD)',
-                data: [7000, 7200, 7500, 7800, 8000, 8500], // Replace with actual trend data
-                borderColor: 'blue',
-                fill: false
-            }]
-        }
-    });
-                // Initialize more charts as needed for other tabs
-            }
-            
-            // Load model status on page load
-            loadModelStatus();
-            
-            // Refresh stats button click handler
-            $("#refresh-stats-btn").click(function() {
-                // This would reload stats from the server
-                $(this).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...');
-                setTimeout(() => {
-                    $(this).html('<i class="fas fa-sync-alt"></i> Refresh Stats');
-                    // Update some values to show activity
-                    let count = parseInt($("#prediction-count").text()) || 0;
-                    $("#prediction-count").text(count + Math.floor(Math.random() * 10));
-                    $("#last-retrained").text(new Date().toLocaleDateString());
-                }, 1000);
+                // After loading model status, load performance metrics
+                loadPerformanceMetrics(selectedModel);
+            })
+            .fail(function() {
+                $("#model-status-alert")
+                    .removeClass("alert-info alert-success")
+                    .addClass("alert-danger")
+                    .text("Error loading model information. Please check server logs.");
             });
+        }
+        
+        // Load performance metrics (placeholder function - would be implemented in the Flask app)
+        function loadPerformanceMetrics(model) {
+            // This is still a static example. Replace with an AJAX call if you have a metrics endpoint.
+            const metrics = {
+                "svm": {
+                    mae: 1250.45,
+                    rmse: 1850.32,
+                    r2: 0.87,
+                    accuracy: 89.5
+                },
+                "random_forest": {
+                    mae: 1100.23,
+                    rmse: 1720.91,
+                    r2: 0.89,
+                    accuracy: 91.2
+                },
+                "xgboost": {
+                    mae: 980.76,
+                    rmse: 1540.18,
+                    r2: 0.91,
+                    accuracy: 93.5
+                },
+                "lightgbm": {
+                    mae: 1050.12,
+                    rmse: 1650.45,
+                    r2: 0.90,
+                    accuracy: 92.8
+                }
+            };
+            
+            const modelKey = model || "svm";
+            if (metrics[modelKey]) {
+                $("#mae-value").text(`$${metrics[modelKey].mae.toFixed(2)}`);
+                $("#rmse-value").text(`$${metrics[modelKey].rmse.toFixed(2)}`);
+                $("#r2-value").text(`${metrics[modelKey].r2.toFixed(2)}`);
+                $("#accuracy-value").text(`${metrics[modelKey].accuracy.toFixed(1)}%`);
+            }
+            
+            // Initialize or update charts
+            initializeCharts(modelKey);
+        }
+        
+        // Initialize charts with data
+        function initializeCharts(modelKey) {
+            // Chart color scheme
+            const colors = {
+                blue: 'rgba(54, 162, 235, 0.7)',
+                blueLight: 'rgba(54, 162, 235, 0.3)',
+                red: 'rgba(255, 99, 132, 0.7)',
+                redLight: 'rgba(255, 99, 132, 0.3)',
+                green: 'rgba(75, 192, 192, 0.7)',
+                greenLight: 'rgba(75, 192, 192, 0.3)',
+                orange: 'rgba(255, 159, 64, 0.7)',
+                orangeLight: 'rgba(255, 159, 64, 0.3)',
+                purple: 'rgba(153, 102, 255, 0.7)',
+                purpleLight: 'rgba(153, 102, 255, 0.3)'
+            };
+            
+            // ---------------------------
+            // Example placeholders for some charts (you can remove or replace if desired):
+            // ---------------------------
+            
+            // Actual vs Predicted Chart (still placeholder)
+            const actualVsPredictedCtx = document.getElementById('actualVsPredictedChart').getContext('2d');
+            new Chart(actualVsPredictedCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Motorcycle Prices',
+                        data: generateScatterData(30, 5000, 20000, 5000, 20000),
+                        backgroundColor: colors.blue,
+                        borderColor: colors.blue
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Actual Price ($)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Predicted Price ($)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Actual vs Predicted Prices'
+                        }
+                    }
+                }
+            });
+            
+            // Error Distribution Chart (still placeholder)
+            const errorDistributionCtx = document.getElementById('errorDistributionChart').getContext('2d');
+            new Chart(errorDistributionCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['-2000', '-1500', '-1000', '-500', '0', '500', '1000', '1500', '2000'],
+                    datasets: [{
+                        label: 'Frequency',
+                        data: [2, 5, 10, 15, 20, 15, 10, 5, 2],
+                        backgroundColor: colors.green
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Prediction Error ($)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Frequency'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribution of Prediction Errors'
+                        }
+                    }
+                }
+            });
+            
+            // MAE Comparison Chart (still placeholder)
+            const maeComparisonCtx = document.getElementById('maeComparisonChart').getContext('2d');
+            new Chart(maeComparisonCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
+                    datasets: [{
+                        label: 'Mean Absolute Error ($)',
+                        data: [1250.45, 1100.23, 980.76, 1050.12],
+                        backgroundColor: [
+                            colors.blue,
+                            colors.green,
+                            colors.orange,
+                            colors.purple
+                        ]
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'MAE Comparison (Lower is Better)'
+                        }
+                    }
+                }
+            });
+            
+            // RMSE Comparison Chart (still placeholder)
+            const rmseComparisonCtx = document.getElementById('rmseComparisonChart').getContext('2d');
+            new Chart(rmseComparisonCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
+                    datasets: [{
+                        label: 'Root Mean Squared Error ($)',
+                        data: [1850.32, 1720.91, 1540.18, 1650.45],
+                        backgroundColor: [
+                            colors.blue,
+                            colors.green,
+                            colors.orange,
+                            colors.purple
+                        ]
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'RMSE Comparison (Lower is Better)'
+                        }
+                    }
+                }
+            });
+            
+            // R2 Comparison Chart (still placeholder)
+            const r2ComparisonCtx = document.getElementById('r2ComparisonChart').getContext('2d');
+            new Chart(r2ComparisonCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
+                    datasets: [{
+                        label: 'R² Score',
+                        data: [0.87, 0.89, 0.91, 0.90],
+                        backgroundColor: [
+                            colors.blue,
+                            colors.green,
+                            colors.orange,
+                            colors.purple
+                        ]
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            min: 0.8,
+                            max: 1.0
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'R² Score Comparison (Higher is Better)'
+                        }
+                    }
+                }
+            });
+            
+            // COE Price Trend Chart (still placeholder)
+            const coeTrendCtx = document.getElementById('coeTrendChart').getContext('2d');
+            new Chart(coeTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: '2024 COE Prices',
+                        data: [76000, 78500, 80100, 82400, 84000, 82500, 81000, 79500, 77000, 75500, 74000, 73000],
+                        backgroundColor: colors.blueLight,
+                        borderColor: colors.blue,
+                        fill: true
+                    }, {
+                        label: '2023 COE Prices',
+                        data: [70000, 71500, 72800, 74200, 75500, 74000, 72500, 71000, 69500, 68000, 67000, 66000],
+                        backgroundColor: colors.redLight,
+                        borderColor: colors.red,
+                        fill: true
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'COE Price (SGD)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Month'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Monthly COE Price Trends'
+                        }
+                    }
+                }
+            });
+            
+            // COE Effect on Used Market Chart (still placeholder)
+            const coeEffectCtx = document.getElementById('coeEffectChart').getContext('2d');
+            new Chart(coeEffectCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Motorcycle Resale Values',
+                        data: generateScatterData(40, 60000, 90000, 8000, 15000),
+                        backgroundColor: colors.purple
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'COE Price (SGD)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Used Motorcycle Price (SGD)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Correlation: COE Prices vs Used Motorcycle Prices'
+                        }
+                    }
+                }
+            });
+            
+            // Now initialize the remaining charts.
+            // We'll fetch REAL data for Engine Size vs Price & Mileage vs Price from /api/chart_data:
+            initializeRemainingCharts(colors);
+        }
+
+        // Generate random scatter data (used by placeholder charts)
+        function generateScatterData(count, minX, maxX, minY, maxY) {
+            const data = [];
+            for (let i = 0; i < count; i++) {
+                data.push({
+                    x: minX + (Math.random() * (maxX - minX)),
+                    y: minY + (Math.random() * (maxY - minY))
+                });
+            }
+            return data;
+        }
+
+        // Initialize remaining charts, including the ones that we want to replace with real data
+        function initializeRemainingCharts(colors) {
+            // 1) Residual Plot (still placeholder)
+            const residualPlotCtx = document.getElementById('residualPlotChart').getContext('2d');
+            new Chart(residualPlotCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Residuals',
+                        data: generateScatterData(30, 5000, 20000, -2000, 2000),
+                        backgroundColor: colors.red
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Predicted Price ($)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Residual (Actual - Predicted)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 2) Price Distribution (still placeholder)
+            const priceDistributionCtx = document.getElementById('priceDistributionChart').getContext('2d');
+            new Chart(priceDistributionCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['0-5K', '5K-10K', '10K-15K', '15K-20K', '20K-25K', '25K+'],
+                    datasets: [{
+                        label: 'Number of Motorcycles',
+                        data: [5, 15, 25, 20, 10, 5],
+                        backgroundColor: colors.green
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Price Range (SGD)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Frequency'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 3) Training Time (still placeholder)
+            const trainingTimeCtx = document.getElementById('trainingTimeChart').getContext('2d');
+            new Chart(trainingTimeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
+                    datasets: [{
+                        label: 'Training Time (seconds)',
+                        data: [12.5, 4.3, 8.1, 6.9],
+                        backgroundColor: ['red', 'green', 'blue', 'purple']
+                    }]
+                }
+            });
+
+            // 4) Feature Importance (still placeholder)
+            const featureImportanceCtx = document.getElementById('featureImportanceChart').getContext('2d');
+            new Chart(featureImportanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Engine Size', 'Mileage', 'COE Expiry Date', 'Number of Owners'],
+                    datasets: [{
+                        label: 'Feature Importance',
+                        data: [0.45, 0.30, 0.15, 0.10],
+                        backgroundColor: ['blue', 'orange', 'green', 'red']
+                    }]
+                }
+            });
+
+            // 5) Feature Correlation (still placeholder)
+            const featureCorrelationCtx = document.getElementById('correlationChart').getContext('2d');
+            new Chart(featureCorrelationCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Engine Size', 'Mileage', 'COE Expiry Date', 'Number of Owners'],
+                    datasets: [{
+                        label: 'Correlation',
+                        data: [0.8, 0.6, 0.4, 0.2],
+                        backgroundColor: ['blue', 'orange', 'green', 'red']
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            min: -1,
+                            max: 1,
+                            title: {
+                                display: true,
+                                text: 'Correlation Coefficient'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Feature Correlation with Price'
+                        }
+                    }
+                }
+            });
+
+            // -----------------------------------------------------------
+            // 6) Engine Size vs Price & 7) Mileage vs Price
+            // Instead of placeholder data, fetch real data from /api/chart_data
+            // -----------------------------------------------------------
+            $.ajax({
+                url: "/api/chart_data",
+                method: "GET",
+                dataType: "json",
+                success: function(response) {
+                    // Engine Size vs Price
+                    const engineSizePriceCtx = document.getElementById('engineSizePriceChart').getContext('2d');
+                    new Chart(engineSizePriceCtx, {
+                        type: 'scatter',
+                        data: {
+                            datasets: [{
+                                label: 'Engine Size vs Price',
+                                // Real data from Flask:
+                                data: response.engine_price_data,
+                                backgroundColor: 'blue'
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Engine Capacity (cc)'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Price (SGD)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    // Mileage vs Price
+                    const mileagePriceCtx = document.getElementById('mileagePriceChart').getContext('2d');
+                    new Chart(mileagePriceCtx, {
+                        type: 'scatter',
+                        data: {
+                            datasets: [{
+                                label: 'Mileage vs Price',
+                                // Real data from Flask:
+                                data: response.mileage_price_data,
+                                backgroundColor: 'orange'
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Mileage (km)'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Price (SGD)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                },
+                error: function(err) {
+                    console.error("Error fetching chart data:", err);
+                }
+            });
+
+            // 8) Example Price by Brand Chart (still placeholder)
+            const priceByBrandCtx = document.getElementById('priceByBrandChart').getContext('2d');
+            new Chart(priceByBrandCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Yamaha', 'Honda', 'Kawasaki', 'BMW'],
+                    datasets: [{
+                        label: 'Average Price (SGD)',
+                        data: [8000, 9000, 12000, 15000],
+                        backgroundColor: ['red', 'blue', 'green', 'purple']
+                    }]
+                }
+            });
+
+            // 9) Example Price Trend Chart (still placeholder)
+            const priceTrendCtx = document.getElementById('priceTrendChart').getContext('2d');
+            new Chart(priceTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['2015', '2016', '2017', '2018', '2019', '2020'],
+                    datasets: [{
+                        label: 'Average Resale Price (SGD)',
+                        data: [7000, 7200, 7500, 7800, 8000, 8500],
+                        borderColor: 'blue',
+                        fill: false
+                    }]
+                }
+            });
+        }
+        
+        // On page load
+        loadModelStatus();
+        
+        // Refresh stats button click handler
+        $("#refresh-stats-btn").click(function() {
+            // This would reload stats from the server in a real app
+            $(this).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...');
+            setTimeout(() => {
+                $(this).html('<i class="fas fa-sync-alt"></i> Refresh Stats');
+                let count = parseInt($("#prediction-count").text()) || 0;
+                $("#prediction-count").text(count + Math.floor(Math.random() * 10));
+                $("#last-retrained").text(new Date().toLocaleDateString());
+            }, 1000);
         });
-    </script>
+    });
+</script>
+
 </body>
 </html>
