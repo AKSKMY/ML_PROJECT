@@ -10,6 +10,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import time
 import sys
 import importlib.util
+import random
+
 
 # Get the absolute path to the parent directory (ML_PROJECT)
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -459,45 +461,179 @@ def get_filters():
 
 #TODO ------------------------ MODEL API ENDPOINTS ------------------------
 
+
 @app.route('/api/chart_data')
 def api_chart_data():
+    """
+    Returns a single JSON object containing all the data needed 
+    for your charts (Engine/Mileage vs. Price, plus placeholders 
+    for everything else).
+    """
     try:
-        df = load_dataset(sample=True)  # Load dataset
-        print("🚀 DEBUG: First few rows of dataset after cleaning:")
-        print(df.head())  # Print first few rows
+        # 1) LOAD YOUR DATA
+        df = load_dataset(sample=True)  # Modify 'sample=True' if needed
+        print("🚀 DEBUG: Dataset loaded successfully.")
 
-        # Print columns
-        print(f"🚀 DEBUG: Available columns: {df.columns}")
-
-        # Print unique values in critical columns
-        if "Engine Capacity" in df.columns and "Price" in df.columns:
+        # 2) DEBUG PRINTS (Optional)
+        print(f"🚀 DEBUG: DF shape: {df.shape}")
+        if "Engine Capacity" in df.columns:
             print(f"🚀 DEBUG: Unique Engine Capacity values: {df['Engine Capacity'].dropna().unique()[:10]}")
+        if "Price" in df.columns:
             print(f"🚀 DEBUG: Unique Price values: {df['Price'].dropna().unique()[:10]}")
 
-        if "Mileage" in df.columns:
-            print(f"🚀 DEBUG: Unique Mileage values: {df['Mileage'].dropna().unique()[:10]}")
+        # 3) REAL DATA: Engine Size vs Price
+        #    Convert your columns to float if they exist and are not null.
+        #    This loop collects points in the form: { x: engineCapacity, y: price }
+        engine_price_data = []
+        if "Engine Capacity" in df.columns and "Price" in df.columns:
+            for _, row in df.iterrows():
+                if pd.notna(row["Engine Capacity"]) and pd.notna(row["Price"]):
+                    engine_price_data.append({
+                        "x": float(row["Engine Capacity"]),
+                        "y": float(row["Price"])
+                    })
+        else:
+            print("🚨 WARNING: 'Engine Capacity' or 'Price' column missing. Using empty engine_price_data.")
 
-        # Print number of rows
-        print(f"🚀 DEBUG: Number of rows in dataset: {len(df)}")
+        # 4) REAL DATA: Mileage vs Price
+        #    Convert your columns to float if they exist and are not null.
+        mileage_price_data = []
+        if "Mileage" in df.columns and "Price" in df.columns:
+            for _, row in df.iterrows():
+                if pd.notna(row["Mileage"]) and pd.notna(row["Price"]):
+                    mileage_price_data.append({
+                        "x": float(row["Mileage"]),
+                        "y": float(row["Price"])
+                    })
+        else:
+            print("🚨 WARNING: 'Mileage' or 'Price' column missing. Using empty mileage_price_data.")
 
-        # ✅ Ensure Engine Size and Mileage are Numeric
-        engine_price_data = [
-            {"x": float(row["Engine Capacity"]), "y": float(row["Price"])}
-            for _, row in df.iterrows()
-            if pd.notna(row["Engine Capacity"]) and pd.notna(row["Price"])
+        # 5) PLACEHOLDERS (STATIC OR RANDOM) FOR ALL OTHER CHARTS
+        #    Replace each with your actual logic or model metrics as you see fit.
+
+        # Example: Actual vs Predicted (placeholder scatter)
+        actual_predicted_data = [
+            {"x": random.uniform(5000, 20000), "y": random.uniform(5000, 20000)}
+            for _ in range(30)
         ]
-        print(f"🚀 DEBUG: Engine Price Data (first 5): {engine_price_data[:5]}")
 
-        mileage_price_data = [
-            {"x": float(row["Mileage"]), "y": float(row["Price"])}
-            for _, row in df.iterrows()
-            if pd.notna(row["Mileage"]) and pd.notna(row["Price"])
+        # Example: Error Distribution
+        error_distribution_data = {
+            "labels": ["-2000", "-1500", "-1000", "-500", "0", "500", "1000", "1500", "2000"],
+            "frequencies": [2, 5, 10, 15, 20, 15, 10, 5, 2]
+        }
+
+        # Example: MAE Comparison
+        mae_comparison_data = [
+            {"model": "SVM",          "value": 1250.45},
+            {"model": "Random Forest","value": 1100.23},
+            {"model": "XGBoost",      "value": 980.76},
+            {"model": "LightGBM",     "value": 1050.12},
         ]
-        print(f"🚀 DEBUG: Mileage Price Data (first 5): {mileage_price_data[:5]}")
 
+        # Example: RMSE Comparison
+        rmse_comparison_data = [
+            {"model": "SVM",          "value": 1850.32},
+            {"model": "Random Forest","value": 1720.91},
+            {"model": "XGBoost",      "value": 1540.18},
+            {"model": "LightGBM",     "value": 1650.45},
+        ]
+
+        # Example: R² Comparison
+        r2_comparison_data = [
+            {"model": "SVM",          "value": 0.87},
+            {"model": "Random Forest","value": 0.89},
+            {"model": "XGBoost",      "value": 0.91},
+            {"model": "LightGBM",     "value": 0.90},
+        ]
+
+        # Example: Monthly COE Price Trends
+        coe_trend_data = {
+            "labels":    ["Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+            "year_2024": [76000, 78500, 80100, 82400, 84000, 82500,
+                          81000, 79500, 77000, 75500, 74000, 73000],
+            "year_2023": [70000, 71500, 72800, 74200, 75500, 74000,
+                          72500, 71000, 69500, 68000, 67000, 66000]
+        }
+
+        # Example: COE Effect on Used Market (scatter)
+        coe_used_market_data = [
+            {"x": random.uniform(60000, 90000), "y": random.uniform(8000, 15000)}
+            for _ in range(40)
+        ]
+
+        # Example: Residual Plot
+        residual_plot_data = [
+            {"x": random.uniform(5000, 20000), "y": random.uniform(-2000, 2000)}
+            for _ in range(30)
+        ]
+
+        # Example: Price Distribution
+        price_distribution_data = {
+            "labels": ["0-5K", "5K-10K", "10K-15K", "15K-20K", "20K-25K", "25K+"],
+            "frequencies": [5, 15, 25, 20, 10, 5]
+        }
+
+        # Example: Training Time (by model)
+        training_time_data = [
+            {"model": "SVM",          "seconds": 12.5},
+            {"model": "Random Forest","seconds": 4.3},
+            {"model": "XGBoost",      "seconds": 8.1},
+            {"model": "LightGBM",     "seconds": 6.9},
+        ]
+
+        # Example: Feature Importance
+        feature_importance_data = [
+            {"feature": "Engine Size",      "importance": 0.45},
+            {"feature": "Mileage",          "importance": 0.30},
+            {"feature": "COE Expiry Date",  "importance": 0.15},
+            {"feature": "Number of Owners", "importance": 0.10},
+        ]
+
+        # Example: Feature Correlation
+        feature_correlation_data = [
+            {"feature": "Engine Size",      "correlation": 0.8},
+            {"feature": "Mileage",          "correlation": 0.6},
+            {"feature": "COE Expiry Date",  "correlation": 0.4},
+            {"feature": "Number of Owners", "correlation": 0.2},
+        ]
+
+        # Example: Price by Brand
+        price_by_brand_data = [
+            {"brand": "Yamaha",   "avg_price": 8000},
+            {"brand": "Honda",    "avg_price": 9000},
+            {"brand": "Kawasaki", "avg_price": 12000},
+            {"brand": "BMW",      "avg_price": 15000},
+        ]
+
+        # Example: Historical Price Trend
+        price_trend_data = {
+            "labels": ["2015", "2016", "2017", "2018", "2019", "2020"],
+            "avg_resale_price": [7000, 7200, 7500, 7800, 8000, 8500]
+        }
+
+        # 6) RETURN ALL CHART DATA
         return jsonify({
-            "engine_price_data": engine_price_data,
-            "mileage_price_data": mileage_price_data
+            # Real data from your dataset:
+            "engine_price_data":       engine_price_data,
+            "mileage_price_data":      mileage_price_data,
+
+            # Placeholders (replace as needed with real computations):
+            "actual_predicted_data":   actual_predicted_data,
+            "error_distribution_data": error_distribution_data,
+            "mae_comparison_data":     mae_comparison_data,
+            "rmse_comparison_data":    rmse_comparison_data,
+            "r2_comparison_data":      r2_comparison_data,
+            "coe_trend_data":          coe_trend_data,
+            "coe_used_market_data":    coe_used_market_data,
+            "residual_plot_data":      residual_plot_data,
+            "price_distribution_data": price_distribution_data,
+            "training_time_data":      training_time_data,
+            "feature_importance_data": feature_importance_data,
+            "feature_correlation_data": feature_correlation_data,
+            "price_by_brand_data":     price_by_brand_data,
+            "price_trend_data":        price_trend_data
         })
 
     except Exception as e:
