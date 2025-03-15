@@ -140,10 +140,10 @@ def prepare_lightgbm_features(df, model, target_col=None):
     expected_features = get_lightgbm_feature_names(model)
     print(f"✅ LightGBM expects exactly these features: {expected_features}")
     
-    # Create a new DataFrame with expected feature names
-    lgbm_df = pd.DataFrame()
+    # Create a new DataFrame with proper index
+    lgbm_df = pd.DataFrame(index=df.index)
     
-    # Define mapping for special cases (No_of_owners vs No._of_owners)
+    # Define mapping for special cases
     special_mapping = {
         'No_of_owners': 'No._of_owners',  # Handle the dot difference
         'No. of owners': 'No._of_owners'  # Handle both versions
@@ -157,13 +157,14 @@ def prepare_lightgbm_features(df, model, target_col=None):
             if mapped == feature and orig in df.columns:
                 mapped_column = orig
                 break
+        
         if mapped_column:
-            # Use the mapped column from original dataframe
-            lgbm_df[feature] = df[mapped_column].copy()
+            # Use the mapped column from original dataframe - use values to avoid Series/DataFrame issues
+            lgbm_df[feature] = df[mapped_column].values
             print(f"✅ Mapped {mapped_column} to {feature}")
         elif feature in df.columns:
-            # Direct copy if feature exists
-            lgbm_df[feature] = df[feature].copy()
+            # Direct copy if feature exists - use values to avoid Series/DataFrame issues
+            lgbm_df[feature] = df[feature].values
         else:
             # Create missing features with default values
             lgbm_df[feature] = 0
@@ -174,6 +175,7 @@ def prepare_lightgbm_features(df, model, target_col=None):
         if feature in ['Brand', 'Category']:
             # Convert to proper format for LightGBM if it's a categorical feature
             if feature in label_encoders:
+                # This is safe now because we've created each column properly
                 lgbm_df[feature] = lgbm_df[feature].astype(str)
                 # Apply label encoding consistently
                 known_categories = label_encoders[feature].classes_
@@ -300,7 +302,7 @@ def load_dataset(sample=False, force_reload=False):
     global dataset_cache
     
     # Return cached dataset if available and not forcing reload
-    if dataset_cache is not None and not force_reload:
+    if (dataset_cache is not None) and (not force_reload):
         print("✅ Using cached dataset")
         return dataset_cache.copy() if sample else dataset_cache
     
@@ -473,8 +475,8 @@ def calculate_model_metrics(model_name, force_recalculate=False):
         # Load the dataset
         df = load_dataset()
         
-        # Apply additional date column fixing to ensure all dates are converted properly
-        df = fix_date_columns(df)
+        # Apply column standardization
+        df = standardize_column_names(df)
         
         # Identify price column (target)
         price_columns = ['Price', 'price', 'Cost', 'cost', 'Value', 'value']
@@ -489,26 +491,18 @@ def calculate_model_metrics(model_name, force_recalculate=False):
         # Clean price column
         df[target_col] = pd.to_numeric(df[target_col].astype(str).str.replace(r'[^0-9.]', '', regex=True), errors='coerce')
         
-        # Create standardized column names for consistent processing
-        column_mapping = {
-            'Engine Capacity': 'Engine_Capacity',
-            'Registration Date': 'Registration_Date',
-            'COE Expiry Date': 'COE_Expiry_Date',
-            'No. of owners': 'No_of_owners'
-        }
-        
-        # Apply column name mapping
-        for old_name, new_name in column_mapping.items():
-            if old_name in df.columns:
-                df.rename(columns={old_name: new_name}, inplace=True)
-                print(f"✅ Renamed column {old_name} to {new_name}")
+        # Define variables early to avoid UnboundLocalError
+        y = df[target_col]
+        X = pd.DataFrame(index=df.index)
+        feature_names = []
+        predictions = None
         
         # LightGBM specific handling - use specialized preparation
-        y = df[target_col]
         if model_name == 'lightgbm':
             print("🔄 Using specialized LightGBM feature preparation")
             try:
                 X, y = prepare_lightgbm_features(df, models[model_name], target_col)
+                feature_names = X.columns.tolist()
                 
                 # Make predictions with fixed thread count and error handling
                 try:
@@ -547,6 +541,9 @@ def calculate_model_metrics(model_name, force_recalculate=False):
                 print(f"❌ LightGBM feature preparation failed: {outer_e}")
                 # Create a very basic fallback
                 predictions = np.ones_like(y) * y.mean()
+                # Ensure X has at least one column for later use
+                X = pd.DataFrame({'placeholder': np.zeros(len(y))}, index=df.index)
+                feature_names = ['placeholder']
                 print("⚠️ Using mean value as fallback predictions")
         else:
             # Regular handling for other models
@@ -685,6 +682,11 @@ def calculate_model_metrics(model_name, force_recalculate=False):
                     print(f"❌ Still failing with numpy array: {e2}")
                     raise e2
         
+        # Ensure predictions is defined before metrics calculation
+        if predictions is None:
+            print("⚠️ No predictions available, using mean values")
+            predictions = np.ones_like(y) * y.mean()
+        
         # Calculate metrics
         mae = float(mean_absolute_error(y, predictions))
         mse = float(mean_squared_error(y, predictions))
@@ -693,6 +695,10 @@ def calculate_model_metrics(model_name, force_recalculate=False):
         
         # Calculate accuracy as percentage of predictions within 20% of actual value
         accuracy = float(np.mean(np.abs(predictions - y) / y <= 0.2) * 100)
+        
+        # Ensure feature_names is properly defined
+        if hasattr(X, 'columns'):
+            feature_names = X.columns.tolist()
         
         # Create visualizations directory
         os.makedirs(SVM_RESULTS_DIR, exist_ok=True)
@@ -832,6 +838,36 @@ def calculate_all_model_metrics(force_recalculate=False):
             results[model_name] = metrics
     return results
 
+def standardize_column_names(df):
+    """
+    Apply consistent naming to DataFrame columns by converting spaces to underscores
+    and handling special cases.
+    """
+    # Mapping of common column variations
+    column_mapping = {
+        'Engine Capacity': 'Engine_Capacity',
+        'Registration Date': 'Registration_Date',
+        'COE Expiry Date': 'COE_Expiry_Date',
+        'No. of owners': 'No_of_owners',
+        'Brand': 'Brand',  # Keep as is
+        'Category': 'Category'  # Keep as is
+    }
+    
+    # Create a new DataFrame with standardized column names
+    standardized_df = df.copy()
+    
+    # Apply mapping and convert numeric columns
+    for old_name, new_name in column_mapping.items():
+        if old_name in standardized_df.columns:
+            # Convert to numeric if appropriate
+            if old_name not in ['Brand', 'Category']:
+                standardized_df[old_name] = pd.to_numeric(standardized_df[old_name], errors='coerce')
+            # Rename the column
+            standardized_df.rename(columns={old_name: new_name}, inplace=True)
+            print(f"✅ Renamed column {old_name} to {new_name}")
+    
+    return standardized_df
+
 def prepare_chart_data():
     """Prepare data for charts in the admin panel"""
     try:
@@ -839,18 +875,7 @@ def prepare_chart_data():
         df = load_dataset(sample=True)
         
         # Standardize column names
-        column_mapping = {
-            'Engine Capacity': 'Engine_Capacity',
-            'Registration Date': 'Registration_Date',
-            'COE Expiry Date': 'COE_Expiry_Date',
-            'No. of owners': 'No_of_owners'
-        }
-        
-        # Apply column mapping
-        for old_col, new_col in column_mapping.items():
-            if old_col in df.columns:
-                df[old_col] = pd.to_numeric(df[old_col], errors='coerce')
-                df.rename(columns={old_col: new_col}, inplace=True)
+        df = standardize_column_names(df)
         
         # Clean and convert categorical columns for XGBoost
         if 'Brand' in df.columns:
@@ -865,7 +890,8 @@ def prepare_chart_data():
         
         # Ensure all columns are numeric to avoid XGBoost errors
         for col in df.columns:
-            if df[col].dtypes == 'object':
+            # Use pandas API for proper type checking
+            if pd.api.types.is_object_dtype(df[col]):
                 df[col] = pd.to_numeric(df[col].astype(str).apply(
                     lambda x: 0 if x in ['nan', '', 'None'] else hash(x) % 100
                 ), errors='coerce').fillna(0)
@@ -1921,7 +1947,7 @@ class SVMPredictor:
                 print(f"⚠️ SVM prediction failed: {e2}, using fallback")
                 base_prediction = 10000.0  # Reasonable fallback for Singapore motorbike price
         
-        # Step 6: Apply domain adjustments to ensure responsiveness
+        # Step 6: Apply domain-specific adjustments to ensure responsiveness
         final_prediction = self.adjust_prediction(base_prediction, standardized_input)
         print(f"✅ Final adjusted SVM prediction: ${final_prediction:.2f}")
         
