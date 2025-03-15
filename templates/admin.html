@@ -36,6 +36,21 @@
             height: 300px;
             width: 100%;
         }
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .spinner-container {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -131,25 +146,41 @@
                     <!-- Metric Cards -->
                     <div class="col-md-3">
                         <div class="metric-card bg-light">
-                            <div class="metric-value text-primary" id="mae-value">N/A</div>
+                            <div class="metric-value text-primary" id="mae-value">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </div>
                             <div class="metric-label">Mean Absolute Error</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="metric-card bg-light">
-                            <div class="metric-value text-danger" id="rmse-value">N/A</div>
+                            <div class="metric-value text-danger" id="rmse-value">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </div>
                             <div class="metric-label">Root Mean Squared Error</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="metric-card bg-light">
-                            <div class="metric-value text-success" id="r2-value">N/A</div>
+                            <div class="metric-value text-success" id="r2-value">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </div>
                             <div class="metric-label">R² Score</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="metric-card bg-light">
-                            <div class="metric-value text-info" id="accuracy-value">N/A</div>
+                            <div class="metric-value text-info" id="accuracy-value">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </div>
                             <div class="metric-label">Prediction Accuracy</div>
                         </div>
                     </div>
@@ -191,8 +222,16 @@
                                         <h5>Actual vs Predicted Prices</h5>
                                     </div>
                                     <div class="card-body">
-                                        <div class="chart-container">
+                                        <div class="chart-container" id="actual-vs-predicted-container">
                                             <canvas id="actualVsPredictedChart"></canvas>
+                                            <div class="loading-overlay" id="actual-vs-predicted-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -205,8 +244,16 @@
                                         <h5>Error Distribution</h5>
                                     </div>
                                     <div class="card-body">
-                                        <div class="chart-container">
+                                        <div class="chart-container" id="error-distribution-container">
                                             <canvas id="errorDistributionChart"></canvas>
+                                            <div class="loading-overlay" id="error-distribution-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -221,6 +268,14 @@
                                     <div class="card-body">
                                         <div class="chart-container">
                                             <canvas id="residualPlotChart"></canvas>
+                                            <div class="loading-overlay" id="residual-plot-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -235,6 +290,14 @@
                                     <div class="card-body">
                                         <div class="chart-container">
                                             <canvas id="priceDistributionChart"></canvas>
+                                            <div class="loading-overlay" id="price-distribution-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -254,6 +317,14 @@
                                     <div class="card-body">
                                         <div class="chart-container">
                                             <canvas id="maeComparisonChart"></canvas>
+                                            <div class="loading-overlay" id="mae-comparison-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -268,6 +339,14 @@
                                     <div class="card-body">
                                         <div class="chart-container">
                                             <canvas id="rmseComparisonChart"></canvas>
+                                            <div class="loading-overlay" id="rmse-comparison-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -282,6 +361,14 @@
                                     <div class="card-body">
                                         <div class="chart-container">
                                             <canvas id="r2ComparisonChart"></canvas>
+                                            <div class="loading-overlay" id="r2-comparison-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -296,6 +383,14 @@
                                     <div class="card-body">
                                         <div class="chart-container">
                                             <canvas id="trainingTimeChart"></canvas>
+                                            <div class="loading-overlay" id="training-time-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -315,6 +410,14 @@
                                     <div class="card-body">
                                         <div class="chart-container">
                                             <canvas id="featureImportanceChart"></canvas>
+                                            <div class="loading-overlay" id="feature-importance-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                         <p class="text-muted mt-2">
                                             <small>*Note: Feature importance may not be directly available for SVM models</small>
@@ -332,6 +435,14 @@
                                     <div class="card-body">
                                         <div class="chart-container">
                                             <canvas id="correlationChart"></canvas>
+                                            <div class="loading-overlay" id="correlation-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -346,6 +457,14 @@
                                     <div class="card-body">
                                         <div class="chart-container">
                                             <canvas id="engineSizePriceChart"></canvas>
+                                            <div class="loading-overlay" id="engine-size-price-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -360,6 +479,14 @@
                                     <div class="card-body">
                                         <div class="chart-container">
                                             <canvas id="mileagePriceChart"></canvas>
+                                            <div class="loading-overlay" id="mileage-price-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -379,6 +506,14 @@
                                     <div class="card-body">
                                         <div class="chart-container">
                                             <canvas id="coeTrendChart"></canvas>
+                                            <div class="loading-overlay" id="coe-trend-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -393,6 +528,14 @@
                                     <div class="card-body">
                                         <div class="chart-container">
                                             <canvas id="priceByBrandChart"></canvas>
+                                            <div class="loading-overlay" id="price-by-brand-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -407,6 +550,14 @@
                                     <div class="card-body">
                                         <div class="chart-container">
                                             <canvas id="priceTrendChart"></canvas>
+                                            <div class="loading-overlay" id="price-trend-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -421,6 +572,14 @@
                                     <div class="card-body">
                                         <div class="chart-container">
                                             <canvas id="coeEffectChart"></canvas>
+                                            <div class="loading-overlay" id="coe-effect-loading">
+                                                <div class="spinner-container">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading data...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -436,6 +595,23 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script>
     $(document).ready(function() {
+        // Global chart references to update them
+        const charts = {};
+        
+        // Color scheme for charts
+        const colors = {
+            blue: 'rgba(54, 162, 235, 0.7)',
+            blueLight: 'rgba(54, 162, 235, 0.3)',
+            red: 'rgba(255, 99, 132, 0.7)',
+            redLight: 'rgba(255, 99, 132, 0.3)',
+            green: 'rgba(75, 192, 192, 0.7)',
+            greenLight: 'rgba(75, 192, 192, 0.3)',
+            orange: 'rgba(255, 159, 64, 0.7)',
+            orangeLight: 'rgba(255, 159, 64, 0.3)',
+            purple: 'rgba(153, 102, 255, 0.7)',
+            purpleLight: 'rgba(153, 102, 255, 0.3)'
+        };
+        
         // Load model status
         function loadModelStatus() {
             $.get("/model_status", function(data) {
@@ -464,15 +640,15 @@
                         .removeClass("alert-info alert-warning alert-danger")
                         .addClass("alert-success")
                         .text(`${availableModels.length} models available. Currently using: ${selectedModel}`);
+                        
+                    // Load real performance metrics
+                    loadPerformanceMetrics(selectedModel);
                 } else {
                     $("#model-status-alert")
                         .removeClass("alert-info alert-success")
                         .addClass("alert-danger")
                         .text("No ML models could be loaded. Please check the dependencies.");
                 }
-                
-                // After loading model status, load performance metrics
-                loadPerformanceMetrics(selectedModel);
             })
             .fail(function() {
                 $("#model-status-alert")
@@ -482,314 +658,561 @@
             });
         }
         
-        // Load performance metrics (placeholder function - would be implemented in the Flask app)
-        function loadPerformanceMetrics(model) {
-            // This is still a static example. Replace with an AJAX call if you have a metrics endpoint.
-            const metrics = {
-                "svm": {
-                    mae: 1250.45,
-                    rmse: 1850.32,
-                    r2: 0.87,
-                    accuracy: 89.5
-                },
-                "random_forest": {
-                    mae: 1100.23,
-                    rmse: 1720.91,
-                    r2: 0.89,
-                    accuracy: 91.2
-                },
-                "xgboost": {
-                    mae: 980.76,
-                    rmse: 1540.18,
-                    r2: 0.91,
-                    accuracy: 93.5
-                },
-                "lightgbm": {
-                    mae: 1050.12,
-                    rmse: 1650.45,
-                    r2: 0.90,
-                    accuracy: 92.8
-                }
-            };
-            
-            const modelKey = model || "svm";
-            if (metrics[modelKey]) {
-                $("#mae-value").text(`$${metrics[modelKey].mae.toFixed(2)}`);
-                $("#rmse-value").text(`$${metrics[modelKey].rmse.toFixed(2)}`);
-                $("#r2-value").text(`${metrics[modelKey].r2.toFixed(2)}`);
-                $("#accuracy-value").text(`${metrics[modelKey].accuracy.toFixed(1)}%`);
-            }
-            
-            // Initialize or update charts
-            initializeCharts(modelKey);
+        // Load system stats
+        function loadSystemStats() {
+            $.get("/api/system_stats", function(data) {
+                $("#system-load").text(data.system_load || "Low");
+                $("#prediction-count").text(data.prediction_count || "0");
+                $("#last-retrained").text(data.last_retrained || "Never");
+            })
+            .fail(function() {
+                console.error("Failed to load system stats");
+            });
         }
         
-        // Initialize charts with data
-        function initializeCharts(modelKey) {
-            // Chart color scheme
-            const colors = {
-                blue: 'rgba(54, 162, 235, 0.7)',
-                blueLight: 'rgba(54, 162, 235, 0.3)',
-                red: 'rgba(255, 99, 132, 0.7)',
-                redLight: 'rgba(255, 99, 132, 0.3)',
-                green: 'rgba(75, 192, 192, 0.7)',
-                greenLight: 'rgba(75, 192, 192, 0.3)',
-                orange: 'rgba(255, 159, 64, 0.7)',
-                orangeLight: 'rgba(255, 159, 64, 0.3)',
-                purple: 'rgba(153, 102, 255, 0.7)',
-                purpleLight: 'rgba(153, 102, 255, 0.3)'
-            };
+        // Load real performance metrics from the server
+        function loadPerformanceMetrics(model) {
+            // Show loading state
+            $("#mae-value, #rmse-value, #r2-value, #accuracy-value").html(
+                '<div class="spinner-border spinner-border-sm" role="status"><span class="sr-only">Loading...</span></div>'
+            );
             
-            // ---------------------------
-            // Example placeholders for some charts (you can remove or replace if desired):
-            // ---------------------------
-            
-            // Actual vs Predicted Chart (still placeholder)
-            const actualVsPredictedCtx = document.getElementById('actualVsPredictedChart').getContext('2d');
-            new Chart(actualVsPredictedCtx, {
-                type: 'scatter',
-                data: {
-                    datasets: [{
-                        label: 'Motorcycle Prices',
-                        data: generateScatterData(30, 5000, 20000, 5000, 20000),
-                        backgroundColor: colors.blue,
-                        borderColor: colors.blue
-                    }]
-                },
-                options: {
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Actual Price ($)'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Predicted Price ($)'
-                            }
-                        }
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Actual vs Predicted Prices'
-                        }
-                    }
+            // Load real metrics from the server
+            $.get("/api/model_metrics", { model: model }, function(data) {
+                if (data) {
+                    // Update metric cards with real data
+                    $("#mae-value").text(`$${data.mae ? data.mae.toFixed(2) : "N/A"}`);
+                    $("#rmse-value").text(`$${data.rmse ? data.rmse.toFixed(2) : "N/A"}`);
+                    $("#r2-value").text(`${data.r2 ? data.r2.toFixed(2) : "N/A"}`);
+                    $("#accuracy-value").text(`${data.accuracy ? data.accuracy.toFixed(1) : "N/A"}%`);
+                    
+                    // Also update visualizations with actual data
+                    loadActualVsPredicedPlot(model);
+                    
+                    // Load model comparison data
+                    loadModelComparisonData();
+                } else {
+                    // Show N/A if data is not available
+                    $("#mae-value, #rmse-value, #r2-value, #accuracy-value").text("N/A");
                 }
+            })
+            .fail(function() {
+                console.error("Failed to load model metrics");
+                $("#mae-value, #rmse-value, #r2-value, #accuracy-value").text("Error");
             });
-            
-            // Error Distribution Chart (still placeholder)
-            const errorDistributionCtx = document.getElementById('errorDistributionChart').getContext('2d');
-            new Chart(errorDistributionCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['-2000', '-1500', '-1000', '-500', '0', '500', '1000', '1500', '2000'],
-                    datasets: [{
-                        label: 'Frequency',
-                        data: [2, 5, 10, 15, 20, 15, 10, 5, 2],
-                        backgroundColor: colors.green
-                    }]
-                },
-                options: {
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Prediction Error ($)'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Frequency'
-                            }
-                        }
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Distribution of Prediction Errors'
-                        }
-                    }
-                }
-            });
-            
-            // MAE Comparison Chart (still placeholder)
-            const maeComparisonCtx = document.getElementById('maeComparisonChart').getContext('2d');
-            new Chart(maeComparisonCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
-                    datasets: [{
-                        label: 'Mean Absolute Error ($)',
-                        data: [1250.45, 1100.23, 980.76, 1050.12],
-                        backgroundColor: [
-                            colors.blue,
-                            colors.green,
-                            colors.orange,
-                            colors.purple
-                        ]
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'MAE Comparison (Lower is Better)'
-                        }
-                    }
-                }
-            });
-            
-            // RMSE Comparison Chart (still placeholder)
-            const rmseComparisonCtx = document.getElementById('rmseComparisonChart').getContext('2d');
-            new Chart(rmseComparisonCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
-                    datasets: [{
-                        label: 'Root Mean Squared Error ($)',
-                        data: [1850.32, 1720.91, 1540.18, 1650.45],
-                        backgroundColor: [
-                            colors.blue,
-                            colors.green,
-                            colors.orange,
-                            colors.purple
-                        ]
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'RMSE Comparison (Lower is Better)'
-                        }
-                    }
-                }
-            });
-            
-            // R2 Comparison Chart (still placeholder)
-            const r2ComparisonCtx = document.getElementById('r2ComparisonChart').getContext('2d');
-            new Chart(r2ComparisonCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
-                    datasets: [{
-                        label: 'R² Score',
-                        data: [0.87, 0.89, 0.91, 0.90],
-                        backgroundColor: [
-                            colors.blue,
-                            colors.green,
-                            colors.orange,
-                            colors.purple
-                        ]
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            min: 0.8,
-                            max: 1.0
-                        }
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'R² Score Comparison (Higher is Better)'
-                        }
-                    }
-                }
-            });
-            
-            // COE Price Trend Chart (still placeholder)
-            const coeTrendCtx = document.getElementById('coeTrendChart').getContext('2d');
-            new Chart(coeTrendCtx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                    datasets: [{
-                        label: '2024 COE Prices',
-                        data: [76000, 78500, 80100, 82400, 84000, 82500, 81000, 79500, 77000, 75500, 74000, 73000],
-                        backgroundColor: colors.blueLight,
-                        borderColor: colors.blue,
-                        fill: true
-                    }, {
-                        label: '2023 COE Prices',
-                        data: [70000, 71500, 72800, 74200, 75500, 74000, 72500, 71000, 69500, 68000, 67000, 66000],
-                        backgroundColor: colors.redLight,
-                        borderColor: colors.red,
-                        fill: true
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'COE Price (SGD)'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Month'
-                            }
-                        }
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Monthly COE Price Trends'
-                        }
-                    }
-                }
-            });
-            
-            // COE Effect on Used Market Chart (still placeholder)
-            const coeEffectCtx = document.getElementById('coeEffectChart').getContext('2d');
-            new Chart(coeEffectCtx, {
-                type: 'scatter',
-                data: {
-                    datasets: [{
-                        label: 'Motorcycle Resale Values',
-                        data: generateScatterData(40, 60000, 90000, 8000, 15000),
-                        backgroundColor: colors.purple
-                    }]
-                },
-                options: {
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'COE Price (SGD)'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Used Motorcycle Price (SGD)'
-                            }
-                        }
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Correlation: COE Prices vs Used Motorcycle Prices'
-                        }
-                    }
-                }
-            });
-            
-            // Now initialize the remaining charts.
-            // We'll fetch REAL data for Engine Size vs Price & Mileage vs Price from /api/chart_data:
-            initializeRemainingCharts(colors);
         }
-
-        // Generate random scatter data (used by placeholder charts)
+        
+        // Check if a visualization can be loaded from an image
+        function tryLoadVisualizationImage(model, visualizationType, containerId, loadingId) {
+            const filename = `${model}_${visualizationType}.png`;
+            
+            // Show loading
+            $(`#${loadingId}`).show();
+            
+            // Try to load the image
+            $.ajax({
+                url: `/visualization/${filename}`,
+                type: 'HEAD',
+                success: function() {
+                    // Image exists, display it
+                    $(`#${containerId}`).html(
+                        `<img src="/visualization/${filename}" class="img-fluid" alt="${visualizationType}">`
+                    );
+                    $(`#${loadingId}`).hide();
+                },
+                error: function() {
+                    // Image doesn't exist, show fallback
+                    $(`#${loadingId}`).hide();
+                }
+            });
+        }
+        
+        // Load actual vs predicted plot
+        function loadActualVsPredicedPlot(model) {
+            // Try to load the plot from a server-generated image
+            tryLoadVisualizationImage(model, "actual_vs_predicted", "actual-vs-predicted-container", "actual-vs-predicted-loading");
+            tryLoadVisualizationImage(model, "error_distribution", "error-distribution-container", "error-distribution-loading");
+            
+            // Load real data from API for other charts
+            $.get("/api/chart_data", function(data) {
+                // Show real data on charts
+                updateChartsWithRealData(data);
+            })
+            .fail(function() {
+                console.error("Failed to load chart data");
+                // Hide all loading indicators
+                $(".loading-overlay").hide();
+            });
+        }
+        
+        // Load model comparison data from API
+        function loadModelComparisonData() {
+            $.get("/api/model_metrics", function(allModelsData) {
+                if (allModelsData) {
+                    // Prepare data for comparison charts
+                    const modelNames = [];
+                    const maeValues = [];
+                    const rmseValues = [];
+                    const r2Values = [];
+                    
+                    // Process data for each model
+                    for (const model in allModelsData) {
+                        const prettyName = model === "svm" ? "SVM" : 
+                                          (model === "random_forest" ? "Random Forest" : 
+                                          (model === "lightgbm" ? "LightGBM" : 
+                                          (model === "xgboost" ? "XGBoost" : model)));
+                        
+                        modelNames.push(prettyName);
+                        maeValues.push(allModelsData[model].mae || 0);
+                        rmseValues.push(allModelsData[model].rmse || 0);
+                        r2Values.push(allModelsData[model].r2 || 0);
+                    }
+                    
+                    // Update comparison charts
+                    updateModelComparisonCharts(modelNames, maeValues, rmseValues, r2Values);
+                }
+                
+                // Hide comparison loading overlays
+                $("#mae-comparison-loading, #rmse-comparison-loading, #r2-comparison-loading").hide();
+            })
+            .fail(function() {
+                console.error("Failed to load model comparison data");
+                // Hide comparison loading overlays
+                $("#mae-comparison-loading, #rmse-comparison-loading, #r2-comparison-loading").hide();
+            });
+        }
+        
+        // Update charts with real data from API
+        function updateChartsWithRealData(data) {
+            // Update Engine Size vs Price chart with real data
+            if (data.engine_price_data && data.engine_price_data.length > 0) {
+                updateOrCreateScatterChart(
+                    'engineSizePriceChart',
+                    data.engine_price_data,
+                    'Engine Capacity (cc)',
+                    'Price (SGD)',
+                    'Engine Size vs Price',
+                    colors.blue
+                );
+                
+                // Hide loading overlay
+                $("#engine-size-price-loading").hide();
+            }
+            
+            // Update Mileage vs Price chart with real data
+            if (data.mileage_price_data && data.mileage_price_data.length > 0) {
+                updateOrCreateScatterChart(
+                    'mileagePriceChart',
+                    data.mileage_price_data,
+                    'Mileage (km)',
+                    'Price (SGD)',
+                    'Mileage vs Price',
+                    colors.orange
+                );
+                
+                // Hide loading overlay
+                $("#mileage-price-loading").hide();
+            }
+            
+            // Update Residual Plot with real data
+            if (data.residual_plot_data && data.residual_plot_data.length > 0) {
+                updateOrCreateScatterChart(
+                    'residualPlotChart',
+                    data.residual_plot_data,
+                    'Predicted Price (SGD)',
+                    'Residual (Actual - Predicted)',
+                    'Residual Analysis',
+                    colors.red
+                );
+                
+                // Hide loading overlay
+                $("#residual-plot-loading").hide();
+            }
+            
+            // Update Price Distribution chart with real data
+            if (data.price_distribution_data) {
+                updateOrCreateBarChart(
+                    'priceDistributionChart',
+                    data.price_distribution_data.labels,
+                    data.price_distribution_data.frequencies,
+                    'Price Range (SGD)',
+                    'Frequency',
+                    'Price Distribution',
+                    colors.green
+                );
+                
+                // Hide loading overlay
+                $("#price-distribution-loading").hide();
+            }
+            
+            // Update COE Trend chart with real data
+            if (data.coe_trend_data) {
+                updateOrCreateLineChart(
+                    'coeTrendChart',
+                    data.coe_trend_data.labels,
+                    [
+                        {
+                            label: '2024 COE Prices',
+                            data: data.coe_trend_data.year_2024,
+                            backgroundColor: colors.blueLight,
+                            borderColor: colors.blue,
+                            fill: true
+                        },
+                        {
+                            label: '2023 COE Prices',
+                            data: data.coe_trend_data.year_2023,
+                            backgroundColor: colors.redLight,
+                            borderColor: colors.red,
+                            fill: true
+                        }
+                    ],
+                    'Month',
+                    'COE Price (SGD)',
+                    'Monthly COE Price Trends'
+                );
+                
+                // Hide loading overlay
+                $("#coe-trend-loading").hide();
+            }
+            
+            // Update COE Effect chart with real data
+            if (data.coe_used_market_data && data.coe_used_market_data.length > 0) {
+                updateOrCreateScatterChart(
+                    'coeEffectChart',
+                    data.coe_used_market_data,
+                    'COE Price (SGD)',
+                    'Used Motorcycle Price (SGD)',
+                    'Correlation: COE Prices vs Used Motorcycle Prices',
+                    colors.purple
+                );
+                
+                // Hide loading overlay
+                $("#coe-effect-loading").hide();
+            }
+            
+            // Update Price by Brand chart with real data
+            if (data.price_by_brand_data && data.price_by_brand_data.length > 0) {
+                const labels = data.price_by_brand_data.map(item => item.brand);
+                const values = data.price_by_brand_data.map(item => item.avg_price);
+                
+                updateOrCreateBarChart(
+                    'priceByBrandChart',
+                    labels,
+                    values,
+                    'Brand',
+                    'Average Price (SGD)',
+                    'Average Price by Brand',
+                    [colors.red, colors.blue, colors.green, colors.purple, colors.orange]
+                );
+                
+                // Hide loading overlay
+                $("#price-by-brand-loading").hide();
+            }
+            
+            // Update Price Trend chart with real data
+            if (data.price_trend_data) {
+                updateOrCreateLineChart(
+                    'priceTrendChart',
+                    data.price_trend_data.labels,
+                    [
+                        {
+                            label: 'Average Resale Price (SGD)',
+                            data: data.price_trend_data.avg_resale_price,
+                            borderColor: colors.blue,
+                            fill: false
+                        }
+                    ],
+                    'Year',
+                    'Average Price (SGD)',
+                    'Historical Price Trend'
+                );
+                
+                // Hide loading overlay
+                $("#price-trend-loading").hide();
+            }
+            
+            // Update Feature Importance chart with real data
+            if (data.feature_importance_data && data.feature_importance_data.length > 0) {
+                const labels = data.feature_importance_data.map(item => item.feature);
+                const values = data.feature_importance_data.map(item => item.importance);
+                
+                updateOrCreateBarChart(
+                    'featureImportanceChart',
+                    labels,
+                    values,
+                    'Feature',
+                    'Importance',
+                    'Feature Importance',
+                    [colors.blue, colors.orange, colors.green, colors.red, colors.purple]
+                );
+                
+                // Hide loading overlay
+                $("#feature-importance-loading").hide();
+            }
+            
+            // Update Feature Correlation chart with real data
+            if (data.feature_correlation_data && data.feature_correlation_data.length > 0) {
+                const labels = data.feature_correlation_data.map(item => item.feature);
+                const values = data.feature_correlation_data.map(item => item.correlation);
+                
+                updateOrCreateBarChart(
+                    'correlationChart',
+                    labels,
+                    values,
+                    'Feature',
+                    'Correlation Coefficient',
+                    'Feature Correlation with Price',
+                    [colors.blue, colors.orange, colors.green, colors.red, colors.purple],
+                    {
+                        y: {
+                            min: -1,
+                            max: 1
+                        }
+                    }
+                );
+                
+                // Hide loading overlay
+                $("#correlation-loading").hide();
+            }
+        }
+        
+        // Update model comparison charts
+        function updateModelComparisonCharts(modelNames, maeValues, rmseValues, r2Values) {
+            // Prepare colors for each model
+            const modelColors = [colors.blue, colors.green, colors.orange, colors.purple];
+            
+            // Update MAE Comparison chart
+            updateOrCreateBarChart(
+                'maeComparisonChart',
+                modelNames,
+                maeValues,
+                'Model',
+                'Mean Absolute Error ($)',
+                'MAE Comparison (Lower is Better)',
+                modelColors,
+                {
+                    indexAxis: 'y'
+                }
+            );
+            
+            // Update RMSE Comparison chart
+            updateOrCreateBarChart(
+                'rmseComparisonChart',
+                modelNames,
+                rmseValues,
+                'Model',
+                'Root Mean Squared Error ($)',
+                'RMSE Comparison (Lower is Better)',
+                modelColors,
+                {
+                    indexAxis: 'y'
+                }
+            );
+            
+            // Update R2 Comparison chart
+            updateOrCreateBarChart(
+                'r2ComparisonChart',
+                modelNames,
+                r2Values,
+                'Model',
+                'R² Score',
+                'R² Score Comparison (Higher is Better)',
+                modelColors,
+                {
+                    y: {
+                        min: Math.max(0, Math.min(...r2Values) - 0.1),
+                        max: Math.min(1.0, Math.max(...r2Values) + 0.1)
+                    }
+                }
+            );
+            
+            // Add placeholder for training time
+            const trainingTimes = [12.5, 4.3, 8.1, 6.9]; // Replace with real data when available
+            
+            updateOrCreateBarChart(
+                'trainingTimeChart',
+                modelNames,
+                trainingTimes,
+                'Model',
+                'Training Time (seconds)',
+                'Training Time Comparison',
+                modelColors
+            );
+            
+            // Hide training time loading
+            $("#training-time-loading").hide();
+        }
+        
+        // Helper function to update or create a scatter chart
+        function updateOrCreateScatterChart(canvasId, data, xLabel, yLabel, title, color) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            if (charts[canvasId]) {
+                // Update existing chart
+                charts[canvasId].data.datasets[0].data = data;
+                charts[canvasId].options.scales.x.title.text = xLabel;
+                charts[canvasId].options.scales.y.title.text = yLabel;
+                charts[canvasId].options.plugins.title.text = title;
+                charts[canvasId].update();
+            } else {
+                // Create new chart
+                charts[canvasId] = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: title,
+                            data: data,
+                            backgroundColor: color
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: xLabel
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: yLabel
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: title
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Helper function to update or create a bar chart
+        function updateOrCreateBarChart(canvasId, labels, data, xLabel, yLabel, title, backgroundColor, additionalScaleOptions = {}) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            if (charts[canvasId]) {
+                // Update existing chart
+                charts[canvasId].data.labels = labels;
+                charts[canvasId].data.datasets[0].data = data;
+                charts[canvasId].data.datasets[0].backgroundColor = backgroundColor;
+                charts[canvasId].options.scales.x.title.text = xLabel;
+                charts[canvasId].options.scales.y.title.text = yLabel;
+                charts[canvasId].options.plugins.title.text = title;
+                
+                // Apply additional scale options
+                if (additionalScaleOptions.indexAxis) {
+                    charts[canvasId].options.indexAxis = additionalScaleOptions.indexAxis;
+                }
+                if (additionalScaleOptions.y) {
+                    charts[canvasId].options.scales.y = {
+                        ...charts[canvasId].options.scales.y,
+                        ...additionalScaleOptions.y
+                    };
+                }
+                
+                charts[canvasId].update();
+            } else {
+                // Create scale options
+                const scaleOptions = {
+                    x: {
+                        title: {
+                            display: true,
+                            text: xLabel
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: yLabel
+                        }
+                    }
+                };
+                
+                // Apply additional scale options
+                if (additionalScaleOptions.y) {
+                    scaleOptions.y = {
+                        ...scaleOptions.y,
+                        ...additionalScaleOptions.y
+                    };
+                }
+                
+                // Create new chart
+                charts[canvasId] = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: title,
+                            data: data,
+                            backgroundColor: backgroundColor
+                        }]
+                    },
+                    options: {
+                        indexAxis: additionalScaleOptions.indexAxis || 'x',
+                        scales: scaleOptions,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: title
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Helper function to update or create a line chart
+        function updateOrCreateLineChart(canvasId, labels, datasets, xLabel, yLabel, title) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            if (charts[canvasId]) {
+                // Update existing chart
+                charts[canvasId].data.labels = labels;
+                charts[canvasId].data.datasets = datasets;
+                charts[canvasId].options.scales.x.title.text = xLabel;
+                charts[canvasId].options.scales.y.title.text = yLabel;
+                charts[canvasId].options.plugins.title.text = title;
+                charts[canvasId].update();
+            } else {
+                // Create new chart
+                charts[canvasId] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: xLabel
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: yLabel
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: title
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Generate random scatter data (only used as fallback)
         function generateScatterData(count, minX, maxX, minY, maxY) {
             const data = [];
             for (let i = 0; i < count; i++) {
@@ -800,244 +1223,38 @@
             }
             return data;
         }
-
-        // Initialize remaining charts, including the ones that we want to replace with real data
-        function initializeRemainingCharts(colors) {
-            // 1) Residual Plot (still placeholder)
-            const residualPlotCtx = document.getElementById('residualPlotChart').getContext('2d');
-            new Chart(residualPlotCtx, {
-                type: 'scatter',
-                data: {
-                    datasets: [{
-                        label: 'Residuals',
-                        data: generateScatterData(30, 5000, 20000, -2000, 2000),
-                        backgroundColor: colors.red
-                    }]
-                },
-                options: {
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Predicted Price ($)'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Residual (Actual - Predicted)'
-                            }
-                        }
-                    }
-                }
-            });
-            
-            // 2) Price Distribution (still placeholder)
-            const priceDistributionCtx = document.getElementById('priceDistributionChart').getContext('2d');
-            new Chart(priceDistributionCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['0-5K', '5K-10K', '10K-15K', '15K-20K', '20K-25K', '25K+'],
-                    datasets: [{
-                        label: 'Number of Motorcycles',
-                        data: [5, 15, 25, 20, 10, 5],
-                        backgroundColor: colors.green
-                    }]
-                },
-                options: {
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Price Range (SGD)'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Frequency'
-                            }
-                        }
-                    }
-                }
-            });
-
-            // 3) Training Time (still placeholder)
-            const trainingTimeCtx = document.getElementById('trainingTimeChart').getContext('2d');
-            new Chart(trainingTimeCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['SVM', 'Random Forest', 'XGBoost', 'LightGBM'],
-                    datasets: [{
-                        label: 'Training Time (seconds)',
-                        data: [12.5, 4.3, 8.1, 6.9],
-                        backgroundColor: ['red', 'green', 'blue', 'purple']
-                    }]
-                }
-            });
-
-            // 4) Feature Importance (still placeholder)
-            const featureImportanceCtx = document.getElementById('featureImportanceChart').getContext('2d');
-            new Chart(featureImportanceCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Engine Size', 'Mileage', 'COE Expiry Date', 'Number of Owners'],
-                    datasets: [{
-                        label: 'Feature Importance',
-                        data: [0.45, 0.30, 0.15, 0.10],
-                        backgroundColor: ['blue', 'orange', 'green', 'red']
-                    }]
-                }
-            });
-
-            // 5) Feature Correlation (still placeholder)
-            const featureCorrelationCtx = document.getElementById('correlationChart').getContext('2d');
-            new Chart(featureCorrelationCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Engine Size', 'Mileage', 'COE Expiry Date', 'Number of Owners'],
-                    datasets: [{
-                        label: 'Correlation',
-                        data: [0.8, 0.6, 0.4, 0.2],
-                        backgroundColor: ['blue', 'orange', 'green', 'red']
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            min: -1,
-                            max: 1,
-                            title: {
-                                display: true,
-                                text: 'Correlation Coefficient'
-                            }
-                        }
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Feature Correlation with Price'
-                        }
-                    }
-                }
-            });
-
-            // -----------------------------------------------------------
-            // 6) Engine Size vs Price & 7) Mileage vs Price
-            // Instead of placeholder data, fetch real data from /api/chart_data
-            // -----------------------------------------------------------
-            $.ajax({
-                url: "/api/chart_data",
-                method: "GET",
-                dataType: "json",
-                success: function(response) {
-                    // Engine Size vs Price
-                    const engineSizePriceCtx = document.getElementById('engineSizePriceChart').getContext('2d');
-                    new Chart(engineSizePriceCtx, {
-                        type: 'scatter',
-                        data: {
-                            datasets: [{
-                                label: 'Engine Size vs Price',
-                                // Real data from Flask:
-                                data: response.engine_price_data,
-                                backgroundColor: 'blue'
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                x: {
-                                    title: {
-                                        display: true,
-                                        text: 'Engine Capacity (cc)'
-                                    }
-                                },
-                                y: {
-                                    title: {
-                                        display: true,
-                                        text: 'Price (SGD)'
-                                    }
-                                }
-                            }
-                        }
-                    });
-
-                    // Mileage vs Price
-                    const mileagePriceCtx = document.getElementById('mileagePriceChart').getContext('2d');
-                    new Chart(mileagePriceCtx, {
-                        type: 'scatter',
-                        data: {
-                            datasets: [{
-                                label: 'Mileage vs Price',
-                                // Real data from Flask:
-                                data: response.mileage_price_data,
-                                backgroundColor: 'orange'
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                x: {
-                                    title: {
-                                        display: true,
-                                        text: 'Mileage (km)'
-                                    }
-                                },
-                                y: {
-                                    title: {
-                                        display: true,
-                                        text: 'Price (SGD)'
-                                    }
-                                }
-                            }
-                        }
-                    });
-                },
-                error: function(err) {
-                    console.error("Error fetching chart data:", err);
-                }
-            });
-
-            // 8) Example Price by Brand Chart (still placeholder)
-            const priceByBrandCtx = document.getElementById('priceByBrandChart').getContext('2d');
-            new Chart(priceByBrandCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Yamaha', 'Honda', 'Kawasaki', 'BMW'],
-                    datasets: [{
-                        label: 'Average Price (SGD)',
-                        data: [8000, 9000, 12000, 15000],
-                        backgroundColor: ['red', 'blue', 'green', 'purple']
-                    }]
-                }
-            });
-
-            // 9) Example Price Trend Chart (still placeholder)
-            const priceTrendCtx = document.getElementById('priceTrendChart').getContext('2d');
-            new Chart(priceTrendCtx, {
-                type: 'line',
-                data: {
-                    labels: ['2015', '2016', '2017', '2018', '2019', '2020'],
-                    datasets: [{
-                        label: 'Average Resale Price (SGD)',
-                        data: [7000, 7200, 7500, 7800, 8000, 8500],
-                        borderColor: 'blue',
-                        fill: false
-                    }]
-                }
-            });
-        }
         
-        // On page load
+        // On page load, load model status, system stats and visualizations
         loadModelStatus();
+        loadSystemStats();
+        
+        // When the model dropdown changes, update metrics and visualizations
+        $("#model").change(function() {
+            const selectedModel = $(this).val();
+            loadPerformanceMetrics(selectedModel);
+        });
+        
+        // When tabs are clicked, make sure charts are properly sized
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function() {
+            // Resize all charts to fit containers
+            Object.values(charts).forEach(chart => {
+                if (chart) {
+                    chart.resize();
+                }
+            });
+        });
         
         // Refresh stats button click handler
         $("#refresh-stats-btn").click(function() {
-            // This would reload stats from the server in a real app
             $(this).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...');
+            
+            // Refresh system stats and metrics
+            loadSystemStats();
+            loadPerformanceMetrics($("#model").val());
+            
+            // Reset button after 1 second
             setTimeout(() => {
                 $(this).html('<i class="fas fa-sync-alt"></i> Refresh Stats');
-                let count = parseInt($("#prediction-count").text()) || 0;
-                $("#prediction-count").text(count + Math.floor(Math.random() * 10));
-                $("#last-retrained").text(new Date().toLocaleDateString());
             }, 1000);
         });
     });
