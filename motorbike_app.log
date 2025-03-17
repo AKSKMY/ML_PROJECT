@@ -1,0 +1,560 @@
+2025-03-16 06:14:20,026 - motorbike_app - INFO - App directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\FLASKAPP\app_v2.py
+2025-03-16 06:14:20,026 - motorbike_app - INFO - Template directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\templates
+2025-03-16 06:14:20,026 - motorbike_app - INFO - Static directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\static
+2025-03-16 06:14:20,142 - motorbike_app - INFO - Loaded RANDOM_FOREST model.
+2025-03-16 06:14:20,171 - motorbike_app - INFO - Loaded XGBOOST model.
+2025-03-16 06:14:20,193 - motorbike_app - INFO - Loaded LIGHTGBM model.
+2025-03-16 06:14:20,194 - motorbike_app - INFO - Loaded SVM model.
+2025-03-16 06:14:20,196 - motorbike_app - INFO - Loaded preprocessing objects.
+2025-03-16 06:14:20,196 - motorbike_app - INFO - Read selected model from file: lightgbm
+2025-03-16 06:14:20,201 - motorbike_app - INFO - Initialized SVMPredictor with 7 expected features
+2025-03-16 06:14:20,201 - motorbike_app - INFO - Added missing features: Engine Capacity, Registration Date, COE Expiry Date, No. of owners with default values
+2025-03-16 06:14:20,202 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:14:20,203 - motorbike_app - INFO - Final adjusted prediction: $16627.07
+2025-03-16 06:14:20,203 - motorbike_app - INFO - SVM model validated with test prediction: $16627.07
+2025-03-16 06:14:20,203 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 06:14:20,204 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:14:20,204 - motorbike_app - INFO - Final adjusted prediction: $16627.07
+2025-03-16 06:14:20,204 - motorbike_app - INFO - Test prediction: $16627.07
+2025-03-16 06:14:20,204 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 06:14:20,205 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:14:20,205 - motorbike_app - INFO - Final adjusted prediction: $13301.66
+2025-03-16 06:14:20,205 - motorbike_app - INFO - Test prediction: $13301.66
+2025-03-16 06:14:20,206 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 06:14:20,206 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:14:20,206 - motorbike_app - INFO - Final adjusted prediction: $14631.82
+2025-03-16 06:14:20,207 - motorbike_app - INFO - Test prediction: $14631.82
+2025-03-16 06:14:20,207 - motorbike_app - INFO - SVM model is responsive to different inputs
+2025-03-16 06:14:20,207 - motorbike_app - INFO - Calculating metrics for lightgbm...
+2025-03-16 06:14:20,207 - motorbike_app - INFO - Looking for datasets in predefined locations
+2025-03-16 06:14:20,207 - motorbike_app - INFO - Found dataset at: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 06:14:20,436 - motorbike_app - INFO - Successfully loaded sample rows from combined_dataset_latest.xlsx
+2025-03-16 06:14:20,436 - motorbike_app - INFO - Loading dataset from: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 06:14:20,436 - motorbike_app - INFO - Loading from Excel: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 06:14:20,533 - motorbike_app - INFO - Successfully loaded 1295 rows from Excel file
+2025-03-16 06:14:20,534 - motorbike_app - WARNING - Failed to create Feather file: Missing optional dependency 'pyarrow'.  Use pip or conda to install pyarrow.
+2025-03-16 06:14:20,534 - motorbike_app - INFO - Processing dataframe...
+2025-03-16 06:14:20,535 - motorbike_app - INFO - Converting date column: Registration Date
+2025-03-16 06:14:20,541 - motorbike_app - INFO - Successfully converted Registration Date to year values
+2025-03-16 06:14:20,541 - motorbike_app - INFO - Converting date column: COE Expiry Date
+2025-03-16 06:14:20,545 - motorbike_app - INFO - Successfully converted COE Expiry Date to year values
+2025-03-16 06:14:20,546 - motorbike_app - INFO - Cleaning engine column: Engine Capacity
+2025-03-16 06:14:20,550 - motorbike_app - INFO - Cleaning mileage column: Mileage
+2025-03-16 06:14:20,552 - motorbike_app - INFO - Cleaning owners column: No. of owners
+2025-03-16 06:14:20,554 - motorbike_app - INFO - Cleaning price column: Price
+2025-03-16 06:14:20,562 - motorbike_app - INFO - Using specialized LightGBM feature preparation
+2025-03-16 06:14:20,563 - motorbike_app - INFO - LightGBM expects exactly these features: ['Brand', 'Engine_Capacity', 'Registration_Date', 'COE_Expiry_Date', 'Mileage', 'No._of_owners', 'Category']
+2025-03-16 06:14:20,586 - motorbike_app - INFO - LightGBM predictions successful with thread control
+2025-03-16 06:14:21,231 - motorbike_app - INFO - Metrics calculated for lightgbm
+2025-03-16 06:14:21,237 - werkzeug - WARNING -  * Debugger is active!
+2025-03-16 06:14:21,241 - werkzeug - INFO -  * Debugger PIN: 199-688-859
+2025-03-16 06:14:33,917 - motorbike_app - INFO - App directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\FLASKAPP\app_v2.py
+2025-03-16 06:14:33,918 - motorbike_app - INFO - Template directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\templates
+2025-03-16 06:14:33,918 - motorbike_app - INFO - Static directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\static
+2025-03-16 06:14:34,017 - motorbike_app - INFO - Loaded RANDOM_FOREST model.
+2025-03-16 06:14:34,044 - motorbike_app - INFO - Loaded XGBOOST model.
+2025-03-16 06:14:34,067 - motorbike_app - INFO - Loaded LIGHTGBM model.
+2025-03-16 06:14:34,068 - motorbike_app - INFO - Loaded SVM model.
+2025-03-16 06:14:34,071 - motorbike_app - INFO - Loaded preprocessing objects.
+2025-03-16 06:14:34,071 - motorbike_app - INFO - Read selected model from file: lightgbm
+2025-03-16 06:14:34,076 - motorbike_app - INFO - Initialized SVMPredictor with 7 expected features
+2025-03-16 06:14:34,077 - motorbike_app - INFO - Added missing features: Engine Capacity, Registration Date, COE Expiry Date, No. of owners with default values
+2025-03-16 06:14:34,078 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:14:34,078 - motorbike_app - INFO - Final adjusted prediction: $16627.07
+2025-03-16 06:14:34,078 - motorbike_app - INFO - SVM model validated with test prediction: $16627.07
+2025-03-16 06:14:34,079 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 06:14:34,079 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:14:34,080 - motorbike_app - INFO - Final adjusted prediction: $16627.07
+2025-03-16 06:14:34,080 - motorbike_app - INFO - Test prediction: $16627.07
+2025-03-16 06:14:34,080 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 06:14:34,081 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:14:34,081 - motorbike_app - INFO - Final adjusted prediction: $13301.66
+2025-03-16 06:14:34,081 - motorbike_app - INFO - Test prediction: $13301.66
+2025-03-16 06:14:34,081 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 06:14:34,082 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:14:34,082 - motorbike_app - INFO - Final adjusted prediction: $14631.82
+2025-03-16 06:14:34,082 - motorbike_app - INFO - Test prediction: $14631.82
+2025-03-16 06:14:34,082 - motorbike_app - INFO - SVM model is responsive to different inputs
+2025-03-16 06:14:34,083 - motorbike_app - INFO - Calculating metrics for lightgbm...
+2025-03-16 06:14:34,083 - motorbike_app - INFO - Looking for datasets in predefined locations
+2025-03-16 06:14:34,084 - motorbike_app - INFO - Found dataset at: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 06:14:34,272 - motorbike_app - INFO - Successfully loaded sample rows from combined_dataset_latest.xlsx
+2025-03-16 06:14:34,272 - motorbike_app - INFO - Loading dataset from: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 06:14:34,273 - motorbike_app - INFO - Loading from Excel: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 06:14:34,360 - motorbike_app - INFO - Successfully loaded 1295 rows from Excel file
+2025-03-16 06:14:34,361 - motorbike_app - WARNING - Failed to create Feather file: Missing optional dependency 'pyarrow'.  Use pip or conda to install pyarrow.
+2025-03-16 06:14:34,361 - motorbike_app - INFO - Processing dataframe...
+2025-03-16 06:14:34,362 - motorbike_app - INFO - Converting date column: Registration Date
+2025-03-16 06:14:34,368 - motorbike_app - INFO - Successfully converted Registration Date to year values
+2025-03-16 06:14:34,368 - motorbike_app - INFO - Converting date column: COE Expiry Date
+2025-03-16 06:14:34,371 - motorbike_app - INFO - Successfully converted COE Expiry Date to year values
+2025-03-16 06:14:34,372 - motorbike_app - INFO - Cleaning engine column: Engine Capacity
+2025-03-16 06:14:34,373 - motorbike_app - INFO - Cleaning mileage column: Mileage
+2025-03-16 06:14:34,375 - motorbike_app - INFO - Cleaning owners column: No. of owners
+2025-03-16 06:14:34,377 - motorbike_app - INFO - Cleaning price column: Price
+2025-03-16 06:14:34,386 - motorbike_app - INFO - Using specialized LightGBM feature preparation
+2025-03-16 06:14:34,386 - motorbike_app - INFO - LightGBM expects exactly these features: ['Brand', 'Engine_Capacity', 'Registration_Date', 'COE_Expiry_Date', 'Mileage', 'No._of_owners', 'Category']
+2025-03-16 06:14:34,405 - motorbike_app - INFO - LightGBM predictions successful with thread control
+2025-03-16 06:14:34,991 - motorbike_app - INFO - Metrics calculated for lightgbm
+2025-03-16 06:14:35,012 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-03-16 06:14:35,012 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-03-16 06:14:35,013 - werkzeug - INFO -  * Restarting with stat
+2025-03-16 06:14:36,547 - motorbike_app - INFO - App directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\FLASKAPP\app_v2.py
+2025-03-16 06:14:36,547 - motorbike_app - INFO - Template directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\templates
+2025-03-16 06:14:36,547 - motorbike_app - INFO - Static directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\static
+2025-03-16 06:14:36,656 - motorbike_app - INFO - Loaded RANDOM_FOREST model.
+2025-03-16 06:14:36,679 - motorbike_app - INFO - Loaded XGBOOST model.
+2025-03-16 06:14:36,700 - motorbike_app - INFO - Loaded LIGHTGBM model.
+2025-03-16 06:14:36,701 - motorbike_app - INFO - Loaded SVM model.
+2025-03-16 06:14:36,702 - motorbike_app - INFO - Loaded preprocessing objects.
+2025-03-16 06:14:36,702 - motorbike_app - INFO - Read selected model from file: lightgbm
+2025-03-16 06:14:36,707 - motorbike_app - INFO - Initialized SVMPredictor with 7 expected features
+2025-03-16 06:14:36,707 - motorbike_app - INFO - Added missing features: Engine Capacity, Registration Date, COE Expiry Date, No. of owners with default values
+2025-03-16 06:14:36,708 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:14:36,708 - motorbike_app - INFO - Final adjusted prediction: $16627.07
+2025-03-16 06:14:36,709 - motorbike_app - INFO - SVM model validated with test prediction: $16627.07
+2025-03-16 06:14:36,709 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 06:14:36,709 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:14:36,710 - motorbike_app - INFO - Final adjusted prediction: $16627.07
+2025-03-16 06:14:36,710 - motorbike_app - INFO - Test prediction: $16627.07
+2025-03-16 06:14:36,710 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 06:14:36,711 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:14:36,711 - motorbike_app - INFO - Final adjusted prediction: $13301.66
+2025-03-16 06:14:36,711 - motorbike_app - INFO - Test prediction: $13301.66
+2025-03-16 06:14:36,711 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 06:14:36,712 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:14:36,712 - motorbike_app - INFO - Final adjusted prediction: $14631.82
+2025-03-16 06:14:36,712 - motorbike_app - INFO - Test prediction: $14631.82
+2025-03-16 06:14:36,712 - motorbike_app - INFO - SVM model is responsive to different inputs
+2025-03-16 06:14:36,712 - motorbike_app - INFO - Calculating metrics for lightgbm...
+2025-03-16 06:14:36,712 - motorbike_app - INFO - Looking for datasets in predefined locations
+2025-03-16 06:14:36,712 - motorbike_app - INFO - Found dataset at: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 06:14:36,883 - motorbike_app - INFO - Successfully loaded sample rows from combined_dataset_latest.xlsx
+2025-03-16 06:14:36,883 - motorbike_app - INFO - Loading dataset from: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 06:14:36,884 - motorbike_app - INFO - Loading from Excel: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 06:14:36,962 - motorbike_app - INFO - Successfully loaded 1295 rows from Excel file
+2025-03-16 06:14:36,962 - motorbike_app - WARNING - Failed to create Feather file: Missing optional dependency 'pyarrow'.  Use pip or conda to install pyarrow.
+2025-03-16 06:14:36,963 - motorbike_app - INFO - Processing dataframe...
+2025-03-16 06:14:36,963 - motorbike_app - INFO - Converting date column: Registration Date
+2025-03-16 06:14:36,967 - motorbike_app - INFO - Successfully converted Registration Date to year values
+2025-03-16 06:14:36,967 - motorbike_app - INFO - Converting date column: COE Expiry Date
+2025-03-16 06:14:36,970 - motorbike_app - INFO - Successfully converted COE Expiry Date to year values
+2025-03-16 06:14:36,971 - motorbike_app - INFO - Cleaning engine column: Engine Capacity
+2025-03-16 06:14:36,973 - motorbike_app - INFO - Cleaning mileage column: Mileage
+2025-03-16 06:14:36,975 - motorbike_app - INFO - Cleaning owners column: No. of owners
+2025-03-16 06:14:36,976 - motorbike_app - INFO - Cleaning price column: Price
+2025-03-16 06:14:36,982 - motorbike_app - INFO - Using specialized LightGBM feature preparation
+2025-03-16 06:14:36,983 - motorbike_app - INFO - LightGBM expects exactly these features: ['Brand', 'Engine_Capacity', 'Registration_Date', 'COE_Expiry_Date', 'Mileage', 'No._of_owners', 'Category']
+2025-03-16 06:14:36,998 - motorbike_app - INFO - LightGBM predictions successful with thread control
+2025-03-16 06:14:37,460 - motorbike_app - INFO - Metrics calculated for lightgbm
+2025-03-16 06:14:37,464 - werkzeug - WARNING -  * Debugger is active!
+2025-03-16 06:14:37,466 - werkzeug - INFO -  * Debugger PIN: 199-688-859
+2025-03-16 06:14:51,100 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:14:51] "[32mGET /admin HTTP/1.1[0m" 302 -
+2025-03-16 06:14:51,111 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:14:51] "GET /login HTTP/1.1" 200 -
+2025-03-16 06:14:51,378 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:14:51] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-03-16 06:14:59,180 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:14:59] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-03-16 06:14:59,192 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:14:59] "GET /admin HTTP/1.1" 200 -
+2025-03-16 06:14:59,291 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:14:59] "GET /model_status HTTP/1.1" 200 -
+2025-03-16 06:14:59,293 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:14:59] "GET /api/system_stats HTTP/1.1" 200 -
+2025-03-16 06:14:59,325 - motorbike_app - INFO - Using cached metrics for lightgbm
+2025-03-16 06:14:59,327 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:14:59] "GET /api/model_metrics?model=lightgbm HTTP/1.1" 200 -
+2025-03-16 06:14:59,339 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:14:59] "HEAD /visualization/lightgbm_actual_vs_predicted.png HTTP/1.1" 200 -
+2025-03-16 06:14:59,340 - motorbike_app - INFO - Using cached dataset
+2025-03-16 06:14:59,356 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:14:59] "HEAD /visualization/lightgbm_error_distribution.png HTTP/1.1" 200 -
+2025-03-16 06:14:59,357 - motorbike_app - INFO - Calculating metrics for random_forest...
+2025-03-16 06:14:59,373 - motorbike_app - INFO - Using cached dataset
+2025-03-16 06:14:59,405 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:14:59] "GET /visualization/lightgbm_error_distribution.png HTTP/1.1" 200 -
+2025-03-16 06:14:59,405 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:14:59] "GET /visualization/lightgbm_actual_vs_predicted.png HTTP/1.1" 200 -
+2025-03-16 06:14:59,408 - motorbike_app - INFO - Model expects these features: ['Brand', 'Engine Capacity', 'Registration Date', 'COE Expiry Date', 'Mileage', 'No. of owners', 'Category']
+2025-03-16 06:14:59,408 - motorbike_app - INFO - Calculating metrics for random_forest...
+2025-03-16 06:14:59,409 - motorbike_app - WARNING - Added missing feature Engine Capacity with default values
+2025-03-16 06:14:59,409 - motorbike_app - INFO - Using cached dataset
+2025-03-16 06:14:59,410 - motorbike_app - WARNING - Added missing feature Registration Date with default values
+2025-03-16 06:14:59,410 - motorbike_app - WARNING - Added missing feature COE Expiry Date with default values
+2025-03-16 06:14:59,412 - motorbike_app - WARNING - Added missing feature No. of owners with default values
+2025-03-16 06:14:59,417 - motorbike_app - INFO - Model expects these features: ['Brand', 'Engine Capacity', 'Registration Date', 'COE Expiry Date', 'Mileage', 'No. of owners', 'Category']
+2025-03-16 06:14:59,419 - motorbike_app - WARNING - Added missing feature Engine Capacity with default values
+2025-03-16 06:14:59,421 - motorbike_app - WARNING - Added missing feature Registration Date with default values
+2025-03-16 06:14:59,425 - motorbike_app - WARNING - Added missing feature COE Expiry Date with default values
+2025-03-16 06:14:59,427 - motorbike_app - WARNING - Added missing feature No. of owners with default values
+2025-03-16 06:14:59,428 - motorbike_app - INFO - Applied scaling to numeric features
+2025-03-16 06:14:59,442 - motorbike_app - INFO - Applied scaling to numeric features
+2025-03-16 06:14:59,456 - motorbike_app - INFO - Successfully made predictions with random_forest
+2025-03-16 06:14:59,464 - motorbike_app - INFO - Successfully made predictions with random_forest
+2025-03-16 06:15:00,341 - motorbike_app - INFO - Metrics calculated for random_forest
+2025-03-16 06:15:00,342 - motorbike_app - INFO - Calculating metrics for xgboost...
+2025-03-16 06:15:00,342 - motorbike_app - INFO - Using cached dataset
+2025-03-16 06:15:00,345 - motorbike_app - INFO - Model expects these features: [np.str_('Brand'), np.str_('Engine Capacity'), np.str_('Registration Date'), np.str_('COE Expiry Date'), np.str_('Mileage'), np.str_('No. of owners'), np.str_('Category')]
+2025-03-16 06:15:00,346 - motorbike_app - WARNING - Added missing feature Engine Capacity with default values
+2025-03-16 06:15:00,346 - motorbike_app - WARNING - Added missing feature Registration Date with default values
+2025-03-16 06:15:00,347 - motorbike_app - WARNING - Added missing feature COE Expiry Date with default values
+2025-03-16 06:15:00,347 - motorbike_app - WARNING - Added missing feature No. of owners with default values
+2025-03-16 06:15:00,356 - motorbike_app - WARNING - Could not apply scaler: Feature names are only supported if all input features have string names, but your input has ['str', 'str_'] as feature name / column name types. If you want feature names to be stored and validated, you must convert them all to strings, by using X.columns = X.columns.astype(str) for example. Otherwise you can remove feature / column names from your input data, or convert them all to a non-string data type., using unscaled data
+2025-03-16 06:15:00,358 - motorbike_app - INFO - Converted all features to numeric for XGBoost
+2025-03-16 06:15:00,364 - motorbike_app - INFO - Successfully made predictions with xgboost
+2025-03-16 06:15:00,376 - motorbike_app - INFO - Metrics calculated for random_forest
+2025-03-16 06:15:00,377 - motorbike_app - INFO - Calculating metrics for xgboost...
+2025-03-16 06:15:00,378 - motorbike_app - INFO - Using cached dataset
+2025-03-16 06:15:00,391 - motorbike_app - INFO - Model expects these features: [np.str_('Brand'), np.str_('Engine Capacity'), np.str_('Registration Date'), np.str_('COE Expiry Date'), np.str_('Mileage'), np.str_('No. of owners'), np.str_('Category')]
+2025-03-16 06:15:00,392 - motorbike_app - WARNING - Added missing feature Engine Capacity with default values
+2025-03-16 06:15:00,393 - motorbike_app - WARNING - Added missing feature Registration Date with default values
+2025-03-16 06:15:00,394 - motorbike_app - WARNING - Added missing feature COE Expiry Date with default values
+2025-03-16 06:15:00,394 - motorbike_app - WARNING - Added missing feature No. of owners with default values
+2025-03-16 06:15:00,409 - motorbike_app - WARNING - Could not apply scaler: Feature names are only supported if all input features have string names, but your input has ['str', 'str_'] as feature name / column name types. If you want feature names to be stored and validated, you must convert them all to strings, by using X.columns = X.columns.astype(str) for example. Otherwise you can remove feature / column names from your input data, or convert them all to a non-string data type., using unscaled data
+2025-03-16 06:15:00,411 - motorbike_app - INFO - Converted all features to numeric for XGBoost
+2025-03-16 06:15:00,425 - motorbike_app - INFO - Successfully made predictions with xgboost
+2025-03-16 06:15:01,265 - motorbike_app - INFO - Metrics calculated for xgboost
+2025-03-16 06:15:01,265 - motorbike_app - INFO - Calculating metrics for svm...
+2025-03-16 06:15:01,267 - motorbike_app - INFO - Using cached dataset
+2025-03-16 06:15:01,271 - motorbike_app - INFO - Model expects these features: ['Brand', 'Engine Capacity', 'Registration Date', 'COE Expiry Date', 'Mileage', 'No. of owners', 'Category']
+2025-03-16 06:15:01,272 - motorbike_app - WARNING - Added missing feature Engine Capacity with default values
+2025-03-16 06:15:01,272 - motorbike_app - WARNING - Added missing feature Registration Date with default values
+2025-03-16 06:15:01,273 - motorbike_app - WARNING - Added missing feature COE Expiry Date with default values
+2025-03-16 06:15:01,273 - motorbike_app - WARNING - Added missing feature No. of owners with default values
+2025-03-16 06:15:01,280 - motorbike_app - INFO - Applied scaling to numeric features
+2025-03-16 06:15:01,293 - motorbike_app - INFO - Metrics calculated for xgboost
+2025-03-16 06:15:01,293 - motorbike_app - INFO - Calculating metrics for svm...
+2025-03-16 06:15:01,293 - motorbike_app - INFO - Using cached dataset
+2025-03-16 06:15:01,296 - motorbike_app - INFO - Model expects these features: ['Brand', 'Engine Capacity', 'Registration Date', 'COE Expiry Date', 'Mileage', 'No. of owners', 'Category']
+2025-03-16 06:15:01,297 - motorbike_app - WARNING - Added missing feature Engine Capacity with default values
+2025-03-16 06:15:01,297 - motorbike_app - WARNING - Added missing feature Registration Date with default values
+2025-03-16 06:15:01,297 - motorbike_app - WARNING - Added missing feature COE Expiry Date with default values
+2025-03-16 06:15:01,298 - motorbike_app - WARNING - Added missing feature No. of owners with default values
+2025-03-16 06:15:01,305 - motorbike_app - INFO - Applied scaling to numeric features
+2025-03-16 06:15:01,367 - motorbike_app - INFO - Successfully made predictions with svm
+2025-03-16 06:15:01,409 - motorbike_app - INFO - Successfully made predictions with svm
+2025-03-16 06:15:02,063 - motorbike_app - INFO - Metrics calculated for svm
+2025-03-16 06:15:02,065 - motorbike_app - INFO - Metrics calculated for svm
+2025-03-16 06:15:02,088 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:02] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:02,097 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:02] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:02,293 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:02] "GET /api/model_metrics?model=random_forest HTTP/1.1" 200 -
+2025-03-16 06:15:02,299 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:02] "HEAD /visualization/random_forest_actual_vs_predicted.png HTTP/1.1" 200 -
+2025-03-16 06:15:02,301 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:02] "HEAD /visualization/random_forest_error_distribution.png HTTP/1.1" 200 -
+2025-03-16 06:15:02,306 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:02] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:02,312 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:02] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:02,314 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:02] "GET /visualization/random_forest_actual_vs_predicted.png HTTP/1.1" 200 -
+2025-03-16 06:15:02,315 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:02] "GET /visualization/random_forest_error_distribution.png HTTP/1.1" 200 -
+2025-03-16 06:15:03,030 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:03] "[32mPOST /update_model HTTP/1.1[0m" 302 -
+2025-03-16 06:15:03,036 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:03] "GET /admin HTTP/1.1" 200 -
+2025-03-16 06:15:03,101 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:03] "GET /model_status HTTP/1.1" 200 -
+2025-03-16 06:15:03,102 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:03] "GET /api/system_stats HTTP/1.1" 200 -
+2025-03-16 06:15:03,115 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:03] "GET /api/model_metrics?model=random_forest HTTP/1.1" 200 -
+2025-03-16 06:15:03,128 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:03] "[36mHEAD /visualization/random_forest_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:03,131 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:03] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:03,135 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:03] "[36mHEAD /visualization/random_forest_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:03,141 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:03] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:03,147 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:03] "[36mGET /visualization/random_forest_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:03,260 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:03] "[36mGET /visualization/random_forest_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:04,835 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:04] "GET /api/model_metrics?model=xgboost HTTP/1.1" 200 -
+2025-03-16 06:15:04,845 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:04] "HEAD /visualization/xgboost_actual_vs_predicted.png HTTP/1.1" 200 -
+2025-03-16 06:15:04,846 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:04] "HEAD /visualization/xgboost_error_distribution.png HTTP/1.1" 200 -
+2025-03-16 06:15:04,850 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:04] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:04,857 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:04] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:04,865 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:04] "GET /visualization/xgboost_actual_vs_predicted.png HTTP/1.1" 200 -
+2025-03-16 06:15:04,866 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:04] "GET /visualization/xgboost_error_distribution.png HTTP/1.1" 200 -
+2025-03-16 06:15:05,287 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:05] "[32mPOST /update_model HTTP/1.1[0m" 302 -
+2025-03-16 06:15:05,292 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:05] "GET /admin HTTP/1.1" 200 -
+2025-03-16 06:15:05,362 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:05] "GET /model_status HTTP/1.1" 200 -
+2025-03-16 06:15:05,364 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:05] "GET /api/system_stats HTTP/1.1" 200 -
+2025-03-16 06:15:05,377 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:05] "GET /api/model_metrics?model=xgboost HTTP/1.1" 200 -
+2025-03-16 06:15:05,389 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:05] "[36mHEAD /visualization/xgboost_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:05,391 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:05] "[36mHEAD /visualization/xgboost_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:05,396 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:05] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:05,402 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:05] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:05,407 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:05] "[36mGET /visualization/xgboost_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:05,408 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:05] "[36mGET /visualization/xgboost_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:07,043 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:07] "GET /api/model_metrics?model=lightgbm HTTP/1.1" 200 -
+2025-03-16 06:15:07,054 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:07] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:07,056 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:07] "[36mHEAD /visualization/lightgbm_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:07,057 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:07] "[36mHEAD /visualization/lightgbm_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:07,063 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:07] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:07,148 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:07] "[36mGET /visualization/lightgbm_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:07,149 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:07] "[36mGET /visualization/lightgbm_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:08,239 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:08] "[32mPOST /update_model HTTP/1.1[0m" 302 -
+2025-03-16 06:15:08,246 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:08] "GET /admin HTTP/1.1" 200 -
+2025-03-16 06:15:08,332 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:08] "GET /model_status HTTP/1.1" 200 -
+2025-03-16 06:15:08,334 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:08] "GET /api/system_stats HTTP/1.1" 200 -
+2025-03-16 06:15:08,358 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:08] "GET /api/model_metrics?model=lightgbm HTTP/1.1" 200 -
+2025-03-16 06:15:08,376 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:08] "[36mHEAD /visualization/lightgbm_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:08,377 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:08] "[36mHEAD /visualization/lightgbm_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:08,382 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:08] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:08,390 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:08] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:08,394 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:08] "[36mGET /visualization/lightgbm_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:08,396 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:08] "[36mGET /visualization/lightgbm_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:11,328 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:11] "GET /api/model_metrics?model=svm HTTP/1.1" 200 -
+2025-03-16 06:15:11,335 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:11] "HEAD /visualization/svm_actual_vs_predicted.png HTTP/1.1" 200 -
+2025-03-16 06:15:11,339 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:11] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:11,348 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:11] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:11,349 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:11] "HEAD /visualization/svm_error_distribution.png HTTP/1.1" 200 -
+2025-03-16 06:15:11,353 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:11] "GET /visualization/svm_actual_vs_predicted.png HTTP/1.1" 200 -
+2025-03-16 06:15:11,446 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:11] "GET /visualization/svm_error_distribution.png HTTP/1.1" 200 -
+2025-03-16 06:15:11,973 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:11] "[32mPOST /update_model HTTP/1.1[0m" 302 -
+2025-03-16 06:15:11,978 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:11] "GET /admin HTTP/1.1" 200 -
+2025-03-16 06:15:12,060 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:12] "GET /model_status HTTP/1.1" 200 -
+2025-03-16 06:15:12,063 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:12] "GET /api/system_stats HTTP/1.1" 200 -
+2025-03-16 06:15:12,083 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:12] "GET /api/model_metrics?model=svm HTTP/1.1" 200 -
+2025-03-16 06:15:12,095 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:12] "[36mHEAD /visualization/svm_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:12,102 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:12] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:12,102 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:12] "[36mHEAD /visualization/svm_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:12,108 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:12] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:12,111 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:12] "[36mGET /visualization/svm_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:12,114 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:12] "[36mGET /visualization/svm_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:15,132 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "GET /api/model_metrics?model=random_forest HTTP/1.1" 200 -
+2025-03-16 06:15:15,151 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:15,153 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "[36mHEAD /visualization/random_forest_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:15,159 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:15,159 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "[36mHEAD /visualization/random_forest_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:15,164 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "[36mGET /visualization/random_forest_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:15,250 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "[36mGET /visualization/random_forest_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:15,573 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "[32mPOST /update_model HTTP/1.1[0m" 302 -
+2025-03-16 06:15:15,578 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "GET /admin HTTP/1.1" 200 -
+2025-03-16 06:15:15,662 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "GET /model_status HTTP/1.1" 200 -
+2025-03-16 06:15:15,663 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "GET /api/system_stats HTTP/1.1" 200 -
+2025-03-16 06:15:15,682 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "GET /api/model_metrics?model=random_forest HTTP/1.1" 200 -
+2025-03-16 06:15:15,695 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "[36mHEAD /visualization/random_forest_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:15,700 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:15,704 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "[36mHEAD /visualization/random_forest_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:15,709 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:15,715 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "[36mGET /visualization/random_forest_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:15,826 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:15] "[36mGET /visualization/random_forest_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:16,738 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:16] "GET /api/model_metrics?model=xgboost HTTP/1.1" 200 -
+2025-03-16 06:15:16,747 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:16] "[36mHEAD /visualization/xgboost_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:16,749 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:16] "[36mHEAD /visualization/xgboost_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:16,753 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:16] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:16,758 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:16] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:16,762 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:16] "[36mGET /visualization/xgboost_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:16,765 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:16] "[36mGET /visualization/xgboost_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:17,158 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:17] "[32mPOST /update_model HTTP/1.1[0m" 302 -
+2025-03-16 06:15:17,163 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:17] "GET /admin HTTP/1.1" 200 -
+2025-03-16 06:15:17,254 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:17] "GET /model_status HTTP/1.1" 200 -
+2025-03-16 06:15:17,256 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:17] "GET /api/system_stats HTTP/1.1" 200 -
+2025-03-16 06:15:17,279 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:17] "GET /api/model_metrics?model=xgboost HTTP/1.1" 200 -
+2025-03-16 06:15:17,292 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:17] "[36mHEAD /visualization/xgboost_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:17,293 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:17] "[36mHEAD /visualization/xgboost_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:17,297 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:17] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:17,305 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:17] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:17,308 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:17] "[36mGET /visualization/xgboost_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:17,309 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:17] "[36mGET /visualization/xgboost_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:18,448 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:18] "GET /api/model_metrics?model=lightgbm HTTP/1.1" 200 -
+2025-03-16 06:15:18,458 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:18] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:18,461 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:18] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:18,461 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:18] "[36mHEAD /visualization/lightgbm_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:18,462 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:18] "[36mHEAD /visualization/lightgbm_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:18,472 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:18] "[36mGET /visualization/lightgbm_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:18,557 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:18] "[36mGET /visualization/lightgbm_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:18,907 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:18] "[32mPOST /update_model HTTP/1.1[0m" 302 -
+2025-03-16 06:15:18,912 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:18] "GET /admin HTTP/1.1" 200 -
+2025-03-16 06:15:18,997 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:18] "GET /model_status HTTP/1.1" 200 -
+2025-03-16 06:15:18,999 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:18] "GET /api/system_stats HTTP/1.1" 200 -
+2025-03-16 06:15:19,018 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:19] "GET /api/model_metrics?model=lightgbm HTTP/1.1" 200 -
+2025-03-16 06:15:19,033 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:19] "[36mHEAD /visualization/lightgbm_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:19,039 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:19] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:19,046 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:19] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:19,047 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:19] "[36mHEAD /visualization/lightgbm_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:19,051 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:19] "[36mGET /visualization/lightgbm_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:19,162 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:19] "[36mGET /visualization/lightgbm_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:20,066 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "GET /api/model_metrics?model=svm HTTP/1.1" 200 -
+2025-03-16 06:15:20,073 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "[36mHEAD /visualization/svm_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:20,077 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:20,077 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "[36mHEAD /visualization/svm_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:20,085 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:20,089 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "[36mGET /visualization/svm_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:20,173 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "[36mGET /visualization/svm_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:20,493 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "[32mPOST /update_model HTTP/1.1[0m" 302 -
+2025-03-16 06:15:20,498 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "GET /admin HTTP/1.1" 200 -
+2025-03-16 06:15:20,580 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "GET /model_status HTTP/1.1" 200 -
+2025-03-16 06:15:20,583 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "GET /api/system_stats HTTP/1.1" 200 -
+2025-03-16 06:15:20,601 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "GET /api/model_metrics?model=svm HTTP/1.1" 200 -
+2025-03-16 06:15:20,616 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:20,617 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "[36mHEAD /visualization/svm_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:20,620 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "[36mHEAD /visualization/svm_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:20,625 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:20,630 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "[36mGET /visualization/svm_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:20,742 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:20] "[36mGET /visualization/svm_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:28,828 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:28] "GET /api/model_metrics?model=random_forest HTTP/1.1" 200 -
+2025-03-16 06:15:28,839 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:28] "[36mHEAD /visualization/random_forest_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:28,842 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:28] "[36mHEAD /visualization/random_forest_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:28,846 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:28] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:28,852 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:28] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:28,856 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:28] "[36mGET /visualization/random_forest_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:28,857 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:28] "[36mGET /visualization/random_forest_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:29,374 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:29] "[32mPOST /update_model HTTP/1.1[0m" 302 -
+2025-03-16 06:15:29,379 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:29] "GET /admin HTTP/1.1" 200 -
+2025-03-16 06:15:29,473 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:29] "GET /model_status HTTP/1.1" 200 -
+2025-03-16 06:15:29,474 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:29] "GET /api/system_stats HTTP/1.1" 200 -
+2025-03-16 06:15:29,492 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:29] "GET /api/model_metrics?model=random_forest HTTP/1.1" 200 -
+2025-03-16 06:15:29,509 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:29] "[36mHEAD /visualization/random_forest_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:29,511 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:29] "[36mHEAD /visualization/random_forest_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:29,516 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:29] "GET /api/chart_data HTTP/1.1" 200 -
+2025-03-16 06:15:29,523 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:29] "GET /api/model_metrics HTTP/1.1" 200 -
+2025-03-16 06:15:29,529 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:29] "[36mGET /visualization/random_forest_actual_vs_predicted.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:29,529 - werkzeug - INFO - 127.0.0.1 - - [16/Mar/2025 06:15:29] "[36mGET /visualization/random_forest_error_distribution.png HTTP/1.1[0m" 304 -
+2025-03-16 06:15:45,779 - werkzeug - INFO -  * Detected change in 'c:\\Users\\Ryan\\School Stuff\\Year 2\\Trimester 2\\Machine Learning\\Project\\ML_PROJECT\\FLASKAPP\\app_v2.py', reloading
+2025-03-16 06:15:46,167 - werkzeug - INFO -  * Restarting with stat
+2025-03-16 06:15:47,515 - motorbike_app - INFO - App directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\FLASKAPP\app_v2.py
+2025-03-16 06:15:47,515 - motorbike_app - INFO - Template directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\templates
+2025-03-16 06:15:47,516 - motorbike_app - INFO - Static directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\static
+2025-03-16 06:15:47,615 - motorbike_app - INFO - Loaded RANDOM_FOREST model.
+2025-03-16 06:15:47,639 - motorbike_app - INFO - Loaded XGBOOST model.
+2025-03-16 06:15:47,660 - motorbike_app - INFO - Loaded LIGHTGBM model.
+2025-03-16 06:15:47,661 - motorbike_app - INFO - Loaded SVM model.
+2025-03-16 06:15:47,663 - motorbike_app - INFO - Loaded preprocessing objects.
+2025-03-16 06:15:47,663 - motorbike_app - INFO - Read selected model from file: random_forest
+2025-03-16 06:15:47,667 - motorbike_app - INFO - Initialized SVMPredictor with 7 expected features
+2025-03-16 06:15:47,667 - motorbike_app - INFO - Added missing features: Engine Capacity, Registration Date, COE Expiry Date, No. of owners with default values
+2025-03-16 06:15:47,668 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:15:47,668 - motorbike_app - INFO - Final adjusted prediction: $16627.07
+2025-03-16 06:15:47,669 - motorbike_app - INFO - SVM model validated with test prediction: $16627.07
+2025-03-16 06:15:47,669 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 06:15:47,669 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:15:47,669 - motorbike_app - INFO - Final adjusted prediction: $16627.07
+2025-03-16 06:15:47,670 - motorbike_app - INFO - Test prediction: $16627.07
+2025-03-16 06:15:47,670 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 06:15:47,670 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:15:47,671 - motorbike_app - INFO - Final adjusted prediction: $13301.66
+2025-03-16 06:15:47,671 - motorbike_app - INFO - Test prediction: $13301.66
+2025-03-16 06:15:47,671 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 06:15:47,671 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 06:15:47,672 - motorbike_app - INFO - Final adjusted prediction: $14631.82
+2025-03-16 06:15:47,672 - motorbike_app - INFO - Test prediction: $14631.82
+2025-03-16 06:15:47,672 - motorbike_app - INFO - SVM model is responsive to different inputs
+2025-03-16 06:15:47,672 - motorbike_app - INFO - Calculating metrics for random_forest...
+2025-03-16 06:15:47,672 - motorbike_app - INFO - Looking for datasets in predefined locations
+2025-03-16 06:15:47,672 - motorbike_app - INFO - Found dataset at: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 06:15:47,854 - motorbike_app - INFO - Successfully loaded sample rows from combined_dataset_latest.xlsx
+2025-03-16 06:15:47,854 - motorbike_app - INFO - Loading dataset from: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 06:15:47,854 - motorbike_app - INFO - Loading from Excel: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 06:15:47,935 - motorbike_app - INFO - Successfully loaded 1295 rows from Excel file
+2025-03-16 06:15:47,935 - motorbike_app - WARNING - Failed to create Feather file: Missing optional dependency 'pyarrow'.  Use pip or conda to install pyarrow.
+2025-03-16 06:15:47,935 - motorbike_app - INFO - Processing dataframe...
+2025-03-16 06:15:47,935 - motorbike_app - INFO - Converting date column: Registration Date
+2025-03-16 06:15:47,940 - motorbike_app - INFO - Successfully converted Registration Date to year values
+2025-03-16 06:15:47,940 - motorbike_app - INFO - Converting date column: COE Expiry Date
+2025-03-16 06:15:47,942 - motorbike_app - INFO - Successfully converted COE Expiry Date to year values
+2025-03-16 06:15:47,943 - motorbike_app - INFO - Cleaning engine column: Engine Capacity
+2025-03-16 06:15:47,944 - motorbike_app - INFO - Cleaning mileage column: Mileage
+2025-03-16 06:15:47,946 - motorbike_app - INFO - Cleaning owners column: No. of owners
+2025-03-16 06:15:47,948 - motorbike_app - INFO - Cleaning price column: Price
+2025-03-16 06:15:47,954 - motorbike_app - INFO - Model expects these features: ['Brand', 'Engine Capacity', 'Registration Date', 'COE Expiry Date', 'Mileage', 'No. of owners', 'Category']
+2025-03-16 06:15:47,955 - motorbike_app - WARNING - Added missing feature Engine Capacity with default values
+2025-03-16 06:15:47,955 - motorbike_app - WARNING - Added missing feature Registration Date with default values
+2025-03-16 06:15:47,956 - motorbike_app - WARNING - Added missing feature COE Expiry Date with default values
+2025-03-16 06:15:47,956 - motorbike_app - WARNING - Added missing feature No. of owners with default values
+2025-03-16 06:15:47,961 - motorbike_app - INFO - Applied scaling to numeric features
+2025-03-16 06:15:47,970 - motorbike_app - INFO - Successfully made predictions with random_forest
+2025-03-16 06:15:48,456 - motorbike_app - INFO - Metrics calculated for random_forest
+2025-03-16 06:15:48,461 - werkzeug - WARNING -  * Debugger is active!
+2025-03-16 06:15:48,467 - werkzeug - INFO -  * Debugger PIN: 199-688-859
+2025-03-16 14:11:44,296 - motorbike_app - INFO - App directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\FLASKAPP\app_v2.py
+2025-03-16 14:11:44,296 - motorbike_app - INFO - Template directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\templates
+2025-03-16 14:11:44,297 - motorbike_app - INFO - Static directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\static
+2025-03-16 14:11:44,542 - motorbike_app - INFO - Loaded RANDOM_FOREST model.
+2025-03-16 14:11:44,599 - motorbike_app - INFO - Loaded XGBOOST model.
+2025-03-16 14:11:44,647 - motorbike_app - INFO - Loaded LIGHTGBM model.
+2025-03-16 14:11:44,649 - motorbike_app - INFO - Loaded SVM model.
+2025-03-16 14:11:44,652 - motorbike_app - INFO - Loaded preprocessing objects.
+2025-03-16 14:11:44,653 - motorbike_app - INFO - Read selected model from file: random_forest
+2025-03-16 14:11:44,658 - motorbike_app - INFO - Initialized SVMPredictor with 7 expected features
+2025-03-16 14:11:44,658 - motorbike_app - INFO - Added missing features: Engine Capacity, Registration Date, COE Expiry Date, No. of owners with default values
+2025-03-16 14:11:44,659 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 14:11:44,660 - motorbike_app - INFO - Final adjusted prediction: $16627.07
+2025-03-16 14:11:44,660 - motorbike_app - INFO - SVM model validated with test prediction: $16627.07
+2025-03-16 14:11:44,661 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 14:11:44,663 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 14:11:44,663 - motorbike_app - INFO - Final adjusted prediction: $16627.07
+2025-03-16 14:11:44,663 - motorbike_app - INFO - Test prediction: $16627.07
+2025-03-16 14:11:44,664 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 14:11:44,665 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 14:11:44,665 - motorbike_app - INFO - Final adjusted prediction: $13301.66
+2025-03-16 14:11:44,665 - motorbike_app - INFO - Test prediction: $13301.66
+2025-03-16 14:11:44,666 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 14:11:44,667 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 14:11:44,667 - motorbike_app - INFO - Final adjusted prediction: $14631.82
+2025-03-16 14:11:44,667 - motorbike_app - INFO - Test prediction: $14631.82
+2025-03-16 14:11:44,668 - motorbike_app - INFO - SVM model is responsive to different inputs
+2025-03-16 14:11:44,668 - motorbike_app - INFO - Calculating metrics for random_forest...
+2025-03-16 14:11:44,668 - motorbike_app - INFO - Looking for datasets in predefined locations
+2025-03-16 14:11:44,669 - motorbike_app - INFO - Found dataset at: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 14:11:45,067 - motorbike_app - INFO - Successfully loaded sample rows from combined_dataset_latest.xlsx
+2025-03-16 14:11:45,067 - motorbike_app - INFO - Loading dataset from: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 14:11:45,068 - motorbike_app - INFO - Loading from Excel: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 14:11:45,156 - motorbike_app - INFO - Successfully loaded 1295 rows from Excel file
+2025-03-16 14:11:45,156 - motorbike_app - WARNING - Failed to create Feather file: Missing optional dependency 'pyarrow'.  Use pip or conda to install pyarrow.
+2025-03-16 14:11:45,157 - motorbike_app - INFO - Processing dataframe...
+2025-03-16 14:11:45,157 - motorbike_app - INFO - Converting date column: Registration Date
+2025-03-16 14:11:45,162 - motorbike_app - INFO - Successfully converted Registration Date to year values
+2025-03-16 14:11:45,162 - motorbike_app - INFO - Converting date column: COE Expiry Date
+2025-03-16 14:11:45,166 - motorbike_app - INFO - Successfully converted COE Expiry Date to year values
+2025-03-16 14:11:45,166 - motorbike_app - INFO - Cleaning engine column: Engine Capacity
+2025-03-16 14:11:45,168 - motorbike_app - INFO - Cleaning mileage column: Mileage
+2025-03-16 14:11:45,171 - motorbike_app - INFO - Cleaning owners column: No. of owners
+2025-03-16 14:11:45,174 - motorbike_app - INFO - Cleaning price column: Price
+2025-03-16 14:11:45,191 - motorbike_app - INFO - Model expects these features: ['Brand', 'Engine Capacity', 'Registration Date', 'COE Expiry Date', 'Mileage', 'No. of owners', 'Category']
+2025-03-16 14:11:45,193 - motorbike_app - WARNING - Added missing feature Engine Capacity with default values
+2025-03-16 14:11:45,194 - motorbike_app - WARNING - Added missing feature Registration Date with default values
+2025-03-16 14:11:45,195 - motorbike_app - WARNING - Added missing feature COE Expiry Date with default values
+2025-03-16 14:11:45,196 - motorbike_app - WARNING - Added missing feature No. of owners with default values
+2025-03-16 14:11:45,206 - motorbike_app - INFO - Applied scaling to numeric features
+2025-03-16 14:11:45,219 - motorbike_app - INFO - Successfully made predictions with random_forest
+2025-03-16 14:11:45,956 - motorbike_app - INFO - Metrics calculated for random_forest
+2025-03-16 14:11:45,983 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-03-16 14:11:45,984 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-03-16 14:11:45,986 - werkzeug - INFO -  * Restarting with stat
+2025-03-16 14:11:48,076 - motorbike_app - INFO - App directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\FLASKAPP\app_v2.py
+2025-03-16 14:11:48,077 - motorbike_app - INFO - Template directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\templates
+2025-03-16 14:11:48,077 - motorbike_app - INFO - Static directory: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\static
+2025-03-16 14:11:48,211 - motorbike_app - INFO - Loaded RANDOM_FOREST model.
+2025-03-16 14:11:48,246 - motorbike_app - INFO - Loaded XGBOOST model.
+2025-03-16 14:11:48,274 - motorbike_app - INFO - Loaded LIGHTGBM model.
+2025-03-16 14:11:48,277 - motorbike_app - INFO - Loaded SVM model.
+2025-03-16 14:11:48,281 - motorbike_app - INFO - Loaded preprocessing objects.
+2025-03-16 14:11:48,282 - motorbike_app - INFO - Read selected model from file: random_forest
+2025-03-16 14:11:48,290 - motorbike_app - INFO - Initialized SVMPredictor with 7 expected features
+2025-03-16 14:11:48,290 - motorbike_app - INFO - Added missing features: Engine Capacity, Registration Date, COE Expiry Date, No. of owners with default values
+2025-03-16 14:11:48,292 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 14:11:48,293 - motorbike_app - INFO - Final adjusted prediction: $16627.07
+2025-03-16 14:11:48,293 - motorbike_app - INFO - SVM model validated with test prediction: $16627.07
+2025-03-16 14:11:48,293 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 14:11:48,296 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 14:11:48,297 - motorbike_app - INFO - Final adjusted prediction: $16627.07
+2025-03-16 14:11:48,299 - motorbike_app - INFO - Test prediction: $16627.07
+2025-03-16 14:11:48,301 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 14:11:48,302 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 14:11:48,303 - motorbike_app - INFO - Final adjusted prediction: $13301.66
+2025-03-16 14:11:48,303 - motorbike_app - INFO - Test prediction: $13301.66
+2025-03-16 14:11:48,304 - motorbike_app - INFO - Added missing features: Brand, Engine Capacity, Registration Date, COE Expiry Date, No. of owners, Category with default values
+2025-03-16 14:11:48,306 - motorbike_app - INFO - Base model prediction: $13301.66
+2025-03-16 14:11:48,306 - motorbike_app - INFO - Final adjusted prediction: $14631.82
+2025-03-16 14:11:48,307 - motorbike_app - INFO - Test prediction: $14631.82
+2025-03-16 14:11:48,308 - motorbike_app - INFO - SVM model is responsive to different inputs
+2025-03-16 14:11:48,308 - motorbike_app - INFO - Calculating metrics for random_forest...
+2025-03-16 14:11:48,308 - motorbike_app - INFO - Looking for datasets in predefined locations
+2025-03-16 14:11:48,309 - motorbike_app - INFO - Found dataset at: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 14:11:48,547 - motorbike_app - INFO - Successfully loaded sample rows from combined_dataset_latest.xlsx
+2025-03-16 14:11:48,547 - motorbike_app - INFO - Loading dataset from: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 14:11:48,548 - motorbike_app - INFO - Loading from Excel: c:\Users\Ryan\School Stuff\Year 2\Trimester 2\Machine Learning\Project\ML_PROJECT\Datasets\combined_dataset_latest.xlsx
+2025-03-16 14:11:48,663 - motorbike_app - INFO - Successfully loaded 1295 rows from Excel file
+2025-03-16 14:11:48,663 - motorbike_app - WARNING - Failed to create Feather file: Missing optional dependency 'pyarrow'.  Use pip or conda to install pyarrow.
+2025-03-16 14:11:48,664 - motorbike_app - INFO - Processing dataframe...
+2025-03-16 14:11:48,664 - motorbike_app - INFO - Converting date column: Registration Date
+2025-03-16 14:11:48,669 - motorbike_app - INFO - Successfully converted Registration Date to year values
+2025-03-16 14:11:48,669 - motorbike_app - INFO - Converting date column: COE Expiry Date
+2025-03-16 14:11:48,674 - motorbike_app - INFO - Successfully converted COE Expiry Date to year values
+2025-03-16 14:11:48,674 - motorbike_app - INFO - Cleaning engine column: Engine Capacity
+2025-03-16 14:11:48,678 - motorbike_app - INFO - Cleaning mileage column: Mileage
+2025-03-16 14:11:48,682 - motorbike_app - INFO - Cleaning owners column: No. of owners
+2025-03-16 14:11:48,684 - motorbike_app - INFO - Cleaning price column: Price
+2025-03-16 14:11:48,695 - motorbike_app - INFO - Model expects these features: ['Brand', 'Engine Capacity', 'Registration Date', 'COE Expiry Date', 'Mileage', 'No. of owners', 'Category']
+2025-03-16 14:11:48,696 - motorbike_app - WARNING - Added missing feature Engine Capacity with default values
+2025-03-16 14:11:48,697 - motorbike_app - WARNING - Added missing feature Registration Date with default values
+2025-03-16 14:11:48,698 - motorbike_app - WARNING - Added missing feature COE Expiry Date with default values
+2025-03-16 14:11:48,698 - motorbike_app - WARNING - Added missing feature No. of owners with default values
+2025-03-16 14:11:48,709 - motorbike_app - INFO - Applied scaling to numeric features
+2025-03-16 14:11:48,720 - motorbike_app - INFO - Successfully made predictions with random_forest
+2025-03-16 14:11:49,702 - motorbike_app - INFO - Metrics calculated for random_forest
+2025-03-16 14:11:49,709 - werkzeug - WARNING -  * Debugger is active!
+2025-03-16 14:11:49,717 - werkzeug - INFO -  * Debugger PIN: 199-688-859
+2025-03-16 14:42:13,538 - werkzeug - INFO -  * Detected change in 'c:\\Users\\Ryan\\School Stuff\\Year 2\\Trimester 2\\Machine Learning\\Project\\ML_PROJECT\\FLASKAPP\\app_v2.py', reloading
+2025-03-16 14:42:14,597 - werkzeug - INFO -  * Restarting with stat

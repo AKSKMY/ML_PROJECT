@@ -140,6 +140,14 @@ numeric_features = ['Engine Capacity', 'Registration Date', 'COE Expiry Date', '
 # Scale them in-place
 X[numeric_features] = scaler.transform(X[numeric_features])
 
+# Check if we need to apply polynomial features
+poly_path = os.path.join("saved_models", "poly_features.pkl")
+if os.path.exists(poly_path):
+    print("✅ Loading polynomial features transformer")
+    poly = joblib.load(poly_path)
+    X = poly.transform(X)
+
+print("\n✅ Data preprocessing complete. Final shape of X:", X.shape)
 print("\n✅ Data preprocessing complete. Final columns in X:", X.columns.tolist())
 
 # -------------------------------------------------------------------------
@@ -163,6 +171,18 @@ for model_name, filename in models_info.items():
     model = joblib.load(model_path)
     predictions = model.predict(X)  # We used X with the same shape/columns as in training
 
+    # Check if SVM uses log transform and apply inverse transform if needed
+    if model_name == "SVM":
+        metadata_path = os.path.join("saved_models", "svm_model_metadata.pkl")
+        if os.path.exists(metadata_path):
+            try:
+                metadata = joblib.load(metadata_path)
+                if metadata.get("log_transform", False):
+                    print(f"✅ Applying inverse log transform to {model_name} predictions")
+                    predictions = np.expm1(predictions)  # Reverse log transformation
+            except Exception as e:
+                print(f"⚠️ Error loading model metadata: {e}")
+
     # Calculate metrics
     r2 = r2_score(y, predictions)
     mse = mean_squared_error(y, predictions)
@@ -185,4 +205,5 @@ if results:
     print("\nPerformance of All Regressor Models:")
     print(results_df.to_string(index=False))
 else:
+    print("\nNo models were evaluated because none were found or loaded.")
     print("\nNo models were evaluated because none were found or loaded.")

@@ -1,7 +1,7 @@
 """
 SVM Model Trainer for Motorcycle Price Prediction
-This script focuses on training and optimizing an SVM model specifically
-for motorcycle price prediction with enhanced sensitivity to input changes.
+This script trains an SVM model and packages all required components so that during prediction
+the input is transformed into exactly the same feature structure (52 features) as in training.
 """
 
 import os
@@ -9,744 +9,476 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.model_selection import train_test_split, RandomizedSearchCV, LeaveOneOut
+from sklearn.preprocessing import RobustScaler, LabelEncoder
+from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.svm import SVR
+from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import joblib
 import time
+from scipy import stats
+import traceback
+from scipy.stats import loguniform
 
+# ------------------------ CONSTANTS ------------------------
+class Constants:
+    """Global constants for the application"""
+    CURRENT_YEAR = 2025
+    DEFAULT_ENGINE_CAPACITY = 150
+    DEFAULT_MILEAGE = 10000
+    DEFAULT_OWNERS = 1
+    PRICE_BINS = [0, 5000, 10000, 15000, 20000, 25000, float('inf')]
+    PRICE_LABELS = ['0-5K', '5K-10K', '10K-15K', '15K-20K', '20K-25K', '25K+']
+
+# ------------------------ HELPER FUNCTIONS ------------------------
+def clean_columns(df):
+    """Clean common columns (price, engine capacity, mileage, owners, dates)"""
+    price_cols = ['Price', 'price', 'Cost', 'cost', 'Value', 'value']
+    for col in df.columns:
+        if any(pc in col for pc in price_cols):
+            df[col] = df[col].astype(str).str.replace(r'[^0-9.]', '', regex=True)
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+    engine_cols = ['Engine Capacity', 'Engine_Capacity', 'engine capacity', 'CC', 'Displacement', 'Engine Size']
+    for col in df.columns:
+        if any(ec in col for ec in engine_cols):
+            df[col] = df[col].astype(str).str.replace(r'[^0-9.]', '', regex=True)
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+            df[col] = df[col].fillna(df[col].median())
+    mileage_cols = ['Mileage', 'mileage', 'Total Mileage', 'KM', 'Total Mileage (km)']
+    for col in df.columns:
+        if any(mc in col for mc in mileage_cols):
+            df[col] = df[col].astype(str).str.replace(r'[^0-9.]', '', regex=True)
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+            df[col] = df[col].fillna(df[col].median())
+    owner_cols = ['No. of owners', 'No_of_owners', 'Owners', 'Previous Owners', 'Number of Previous Owners']
+    for col in df.columns:
+        if any(oc in col for oc in owner_cols):
+            df[col] = df[col].astype(str).str.extract(r'(\d+)', expand=False)
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+            df[col] = df[col].fillna(1)
+    date_cols = ['Registration Date', 'Registration_Date', 'COE Expiry Date', 'COE_Expiry_Date']
+    for col in df.columns:
+        if any(dc in col for dc in date_cols):
+            try:
+                df[col] = pd.to_datetime(df[col], errors='coerce').dt.year
+            except:
+                df[col] = df[col].astype(str).str.extract(r'(\d{4})', expand=False)
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+    return df
+
+def remove_outliers_mask(X, y):
+    """
+    Compute a boolean mask to remove outliers based on z-scores on scaled data.
+    """
+    if X.shape[0] == 0:
+        print("⚠️ No data to remove outliers from")
+        return np.ones(X.shape[0], dtype=bool)
+    print(f"⚠️ Initial data shape before outlier removal: {X.shape}")
+    try:
+        z_scores = np.abs(stats.zscore(X, nan_policy='omit'))
+    except Exception as e:
+        print(f"⚠️ Error calculating z-scores: {e}. Skipping outlier removal.")
+        return np.ones(X.shape[0], dtype=bool)
+    threshold = 3.0
+    mask = (z_scores < threshold).all(axis=1)
+    kept_ratio = mask.sum() / len(mask)
+    print(f"✅ Keeping {mask.sum()} out of {len(mask)} samples ({kept_ratio:.2%})")
+    if kept_ratio < 0.5:
+        print("⚠️ Outlier removal would filter out too many samples. Using threshold 4.0")
+        threshold = 4.0
+        mask = (z_scores < threshold).all(axis=1)
+        print(f"✅ New threshold {threshold}: Keeping {mask.sum()} out of {len(mask)} samples")
+    if mask.sum() < 10:
+        print("⚠️ Too few samples would remain; keeping all data.")
+        mask = np.ones(X.shape[0], dtype=bool)
+    return mask
+
+# ------------------------ SVMPredictor CLASS ------------------------
+class SVMPredictor:
+    def __init__(self, model, scaler, label_encoders, feature_names=None):
+        self.model = model
+        self.scaler = scaler
+        self.label_encoders = label_encoders
+        self.current_year = Constants.CURRENT_YEAR
+        if feature_names is None:
+            try:
+                self.feature_names = joblib.load(os.path.join("saved_models", "feature_names.pkl"))
+                print(f"✅ Loaded {len(self.feature_names)} feature names")
+            except Exception as e:
+                print(f"⚠️ Error loading feature names: {e}")
+                self.feature_names = []
+        else:
+            self.feature_names = feature_names
+
+    def predict(self, input_data):
+        try:
+            # Create a DataFrame with all expected features (initialize with zeros)
+            df = pd.DataFrame(0, index=[0], columns=self.feature_names)
+            print(f"✅ Created DataFrame with {len(self.feature_names)} columns")
+            # Fill in numerical features
+            numerical_features = ['Engine_Capacity', 'Registration_Date', 'COE_Expiry_Date', 'Mileage', 'No_of_owners']
+            for feature in numerical_features:
+                if feature in input_data and feature in df.columns:
+                    df[feature] = input_data[feature]
+            # Handle categorical features (one-hot encoding)
+            for col in ['Brand', 'Category']:
+                if col in input_data and col in self.label_encoders:
+                    # Get the input value
+                    value = input_data[col]
+                    # Try exact match first
+                    onehot_col = f"{col}_{value}"
+                    if onehot_col in df.columns:
+                        df[onehot_col] = 1
+                        print(f"✅ Set {onehot_col} to 1")
+                    else:
+                        # Fallback: use label encoder
+                        le = self.label_encoders[col]
+                        if value in le.classes_:
+                            encoded = le.transform([value])[0]
+                            onehot_col = f"{col}_{encoded}"
+                            if onehot_col in df.columns:
+                                df[onehot_col] = 1
+                                print(f"✅ Set {onehot_col} to 1")
+                        else:
+                            print(f"⚠️ Value '{value}' not found for {col}")
+            print(f"✅ Feature matrix shape: {df.values.shape}")
+            # (Optional) Debug first few columns:
+            print("Debug - First 5 columns:")
+            for i, col in enumerate(df.columns[:5]):
+                print(f"  {col}: {df.iloc[0, i]}")
+            prediction = self.model.predict(df.values)[0]
+            print(f"✅ Base prediction: ${prediction:.2f}")
+            adjusted = self.adjust_prediction(prediction, input_data)
+            print(f"✅ Adjusted prediction: ${adjusted:.2f}")
+            return adjusted
+        except Exception as e:
+            print(f"❌ Prediction error: {e}")
+            traceback.print_exc()
+            return None
+
+    def adjust_prediction(self, base_prediction, input_data):
+        prediction = base_prediction
+        # COE adjustment
+        if 'COE_Expiry_Date' in input_data:
+            years_left = max(0, input_data['COE_Expiry_Date'] - self.current_year)
+            coe_factor = 1.0 + (years_left * 0.05)
+            prediction *= coe_factor
+            print(f"📅 COE adjustment: {years_left} years → factor {coe_factor:.2f}")
+        # Owners adjustment
+        if 'No_of_owners' in input_data:
+            owners = input_data['No_of_owners']
+            if owners > 1:
+                owner_factor = 1.0 - ((owners - 1) * 0.1)
+                prediction *= owner_factor
+                print(f"👥 Owner adjustment: {owners} owners → factor {owner_factor:.2f}")
+        return prediction
+
+# ------------------------ SVMMotorbikeTrainer CLASS ------------------------
 class SVMMotorbikeTrainer:
     def __init__(self, visualize=True):
-        """
-        Initialize the SVM Motorbike Price Predictor
-
-        Parameters:
-        -----------
-        visualize : bool
-            Whether to create visualization plots
-        """
-        # Define paths
+        """Initialize the SVM Motorbike Price Trainer"""
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
         self.dataset_path = self.find_dataset()
         self.models_dir = os.path.join(self.base_dir, "saved_models")
         os.makedirs(self.models_dir, exist_ok=True)
-        
-        # Results directory for visualizations
+        self.results_dir = os.path.join(self.base_dir, "results") if visualize else None
         if visualize:
-            self.results_dir = os.path.join(self.base_dir, "SVM", "results")
             os.makedirs(self.results_dir, exist_ok=True)
-        
-        # SVM Model parameters
+        self.label_encoders = {}  # For 'Brand' and 'Category'
+        self.feature_names = None
+        self.column_name_mapping = {}
         self.model = None
-        self.scaler = None
-        self.label_encoders = {}
-        self.visualize = visualize
-        
+        self.scaler = None  # Will be extracted from the pipeline
         print(f"🔍 Dataset path: {self.dataset_path}")
         print(f"💾 Models directory: {self.models_dir}")
-        if visualize:
+        if self.results_dir:
             print(f"📊 Results directory: {self.results_dir}")
 
     def find_dataset(self):
-        """Find the latest dataset file"""
         dataset_names = ["combined_dataset_latest.xlsx", "Latest_Dataset.xlsx", "bike_data.xlsx"]
-        
-        # First, check the immediate directories
         search_dirs = [".", "Datasets", "../Datasets", "../../Datasets", "NewStuff", "../NewStuff"]
-        
-        # Get the absolute path to the project root (parent of SVM directory)
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        
-        # Print debugging information
-        print(f"🔍 Looking for datasets in directories relative to: {self.base_dir}")
+        print(f"🔍 Looking for datasets relative to: {self.base_dir}")
         print(f"🔍 Project root directory: {project_root}")
-        
-        # Check all combinations of search directories and dataset names
         for search_dir in search_dirs:
             search_path = os.path.join(self.base_dir, search_dir)
             print(f"🔍 Checking directory: {search_path}")
-            
             for dataset_name in dataset_names:
                 potential_path = os.path.join(search_path, dataset_name)
                 if os.path.exists(potential_path):
                     print(f"✅ Found dataset at: {potential_path}")
                     return potential_path
-        
-        # Explicit check for known project paths
-        explicit_paths = [
-            os.path.join(project_root, "Datasets", "bike_data.xlsx"),
-            os.path.join(project_root, "Datasets", "combined_dataset_latest.xlsx"),
-            os.path.join(project_root, "Datasets", "Latest_Dataset.xlsx"),
-            os.path.join(project_root, "NewStuff", "bike_data.xlsx"),
-            os.path.join(project_root, "NewStuff", "combined_dataset_latest.xlsx"),
-            os.path.join(project_root, "KNN & NN", "Latest_Dataset.xlsx"),
-            os.path.join(project_root, "LogisticRegression", "Latest_Dataset.xlsx")
-        ]
-        
-        for path in explicit_paths:
-            print(f"🔍 Checking explicit path: {path}")
-            if os.path.exists(path):
-                print(f"✅ Found dataset at: {path}")
-                return path
-        
-        # If still not found, try a more exhaustive search
         print("🔍 Performing deeper search for dataset files...")
         for root, dirs, files in os.walk(project_root):
             for file in files:
-                if file in dataset_names:
+                if file in dataset_names or (file.endswith('.xlsx') and any(k in file.lower() for k in ['bike', 'motor', 'vehicle'])):
                     path = os.path.join(root, file)
                     print(f"✅ Found dataset at: {path}")
                     return path
-                # Also check for Excel files that might be relevant
-                elif file.endswith('.xlsx') and any(keyword in file.lower() for keyword in ['bike', 'motor', 'vehicle']):
-                    path = os.path.join(root, file)
-                    print(f"🔍 Found potentially relevant dataset at: {path}")
-                    return path
-        
-        # If we get here, we couldn't find the dataset
-        print("❌ No dataset files found after exhaustive search.")
-        
-        # Create a synthetic dataset as a last resort
-        print("⚠️ Creating a synthetic dataset for demonstration purposes...")
+        print("❌ No dataset files found. Creating synthetic dataset for demonstration.")
         synthetic_path = os.path.join(self.base_dir, "synthetic_bike_data.xlsx")
-        
-        import numpy as np
-        import pandas as pd
-        
-        # Create synthetic data with more sensitivity to parameters we care about
+        self.create_synthetic_dataset(synthetic_path)
+        return synthetic_path
+
+    def create_synthetic_dataset(self, path):
+        print("⚠️ CREATING SYNTHETIC DATASET - ONLY FOR DEMONSTRATION PURPOSES")
         np.random.seed(42)
-        n_samples = 1000  # Increased sample size for better training
-        
+        n_samples = 5000
         brands = ["Honda", "Yamaha", "Kawasaki", "Suzuki", "Ducati", "BMW", "KTM", "Triumph"]
-        categories = ["Sport", "Naked", "Cruiser", "Touring", "Scooter", "Adventure", "Off-road"]
-        
-        # Base price for each brand
-        brand_base_prices = {
-            "Honda": 10000,
-            "Yamaha": 11000,
-            "Kawasaki": 12000,
-            "Suzuki": 11500,
-            "Ducati": 18000,
-            "BMW": 17000,
-            "KTM": 15000,
-            "Triumph": 16000
-        }
-        
-        # Base price for each category
-        category_base_prices = {
-            "Sport": 3000,
-            "Naked": 2000,
-            "Cruiser": 2500,
-            "Touring": 4000,
-            "Scooter": 1000,
-            "Adventure": 3500,
-            "Off-road": 2800
-        }
-        
-        # Generate random data with price dependencies
-        brand_list = np.random.choice(list(brand_base_prices.keys()), n_samples)
-        category_list = np.random.choice(list(category_base_prices.keys()), n_samples)
+        categories = ["Sport Bikes", "Naked", "Cruiser", "Touring", "Scooter", "Adventure", "Off-road"]
+        brand_base = {"Honda":10000, "Yamaha":11000, "Kawasaki":12000, "Suzuki":11500,
+                      "Ducati":18000, "BMW":17000, "KTM":15000, "Triumph":16000}
+        cat_base = {"Sport Bikes":3000, "Naked":2000, "Cruiser":2500, "Touring":4000,
+                    "Scooter":1000, "Adventure":3500, "Off-road":2800}
+        brand_list = np.random.choice(list(brand_base.keys()), n_samples)
+        cat_list = np.random.choice(list(cat_base.keys()), n_samples)
         engine_capacity = np.random.randint(125, 1200, n_samples)
         reg_year = np.random.randint(2010, 2024, n_samples)
         coe_year = np.array([min(2034, reg_year[i] + np.random.randint(5, 11)) for i in range(n_samples)])
         mileage = np.random.randint(1000, 100000, n_samples)
         owners = np.random.randint(1, 4, n_samples)
-        
-        # Calculate prices based on features with strong dependencies
         prices = []
-        current_year = 2025
-        
+        current_year = Constants.CURRENT_YEAR
         for i in range(n_samples):
-            # Base price from brand and category
-            price = brand_base_prices[brand_list[i]] + category_base_prices[category_list[i]]
-            
-            # Engine capacity effect (bigger engine = higher price)
+            price = brand_base[brand_list[i]] + cat_base[cat_list[i]]
             price += engine_capacity[i] * 10
-            
-            # Registration year effect (newer registration = higher price)
             price += (reg_year[i] - 2010) * 500
-            
-            # COE effect (more years left = higher price)
-            coe_years_left = coe_year[i] - current_year
-            price += coe_years_left * 1000  # Strong dependency on COE years
-            
-            # Mileage effect (higher mileage = lower price)
+            coe_left = coe_year[i] - current_year
+            price += coe_left * 1000
             price -= (mileage[i] / 1000) * 100
-            
-            # Owner effect (more owners = lower price)
-            price -= (owners[i] - 1) * 2000  # Strong dependency on owner count
-            
-            # Add some randomness
+            price -= (owners[i] - 1) * 2000
             price += np.random.normal(0, 1000)
-            
-            # Ensure minimum reasonable price
-            price = max(price, 3000)
-            
-            prices.append(price)
-        
-        # Create a DataFrame
+            prices.append(max(price, 3000))
         data = {
             "Brand": brand_list,
-            "Model": [f"Model-{i}" for i in range(n_samples)],
-            "Engine Capacity": engine_capacity,
-            "Registration Date": reg_year,
-            "COE Expiry Date": coe_year,
+            "Engine_Capacity": engine_capacity,
+            "Registration_Date": reg_year,
+            "COE_Expiry_Date": coe_year,
             "Mileage": mileage,
-            "No. of owners": owners,
-            "Category": category_list,
+            "No_of_owners": owners,
+            "Category": cat_list,
             "Price": prices
         }
-        
         df = pd.DataFrame(data)
-        df.to_excel(synthetic_path, index=False)
-        
-        print(f"✅ Created synthetic dataset at: {synthetic_path}")
-        return synthetic_path
+        df.to_excel(path, index=False)
+        print(f"✅ Created synthetic dataset at: {path}")
+        return df
 
     def load_data(self):
-        """Load and preprocess the motorcycle dataset"""
-        print("🔄 Loading and preprocessing data...")
-        
-        try:
-            # Try different Excel engines
-            for engine in ['openpyxl', 'xlrd']:
-                try:
-                    df = pd.read_excel(self.dataset_path, engine=engine)
-                    break
-                except Exception as e:
-                    print(f"⚠️ Engine {engine} failed: {e}")
-            else:
-                raise ValueError("Could not read Excel file with any engine")
-            
-            print(f"✅ Dataset loaded successfully with {df.shape[0]} rows and {df.shape[1]} columns")
-        except Exception as e:
-            print(f"❌ Error loading dataset: {e}")
-            return None
-        
-        # Print actual column names for debugging
-        print("📋 Actual columns in dataset:", df.columns.tolist())
-        
-        # Standardize column names 
+        if not os.path.exists(self.dataset_path):
+            df = self.create_synthetic_dataset(self.dataset_path)
+        else:
+            try:
+                for engine in ['openpyxl', 'xlrd']:
+                    try:
+                        df = pd.read_excel(self.dataset_path, engine=engine)
+                        break
+                    except Exception as e:
+                        print(f"⚠️ Engine {engine} failed: {e}")
+                else:
+                    raise ValueError("Could not read Excel file with any engine")
+            except Exception as e:
+                print(f"❌ Error loading dataset: {e}")
+                df = self.create_synthetic_dataset(self.dataset_path)
+        print(f"✅ Dataset loaded with {df.shape[0]} rows and {df.shape[1]} columns")
+        print("📋 Actual columns:", df.columns.tolist())
         df.columns = df.columns.str.strip()
-        
-        # Try to identify price column (different datasets might use different names)
         price_columns = ['Price', 'price', 'Cost', 'cost', 'Value', 'value']
+        target_col = None
         for col in price_columns:
             if col in df.columns:
                 target_col = col
                 break
-        else:
-            # If no clear price column, use the last column and hope it's price
+        if target_col is None:
             target_col = df.columns[-1]
-            print(f"⚠️ No clear price column found, using {target_col} as target")
-        
-        # Clean price column (remove currency symbols and commas)
+            print(f"⚠️ No clear price column found; using {target_col} as target")
         df[target_col] = df[target_col].astype(str).str.replace(r'[^0-9.]', '', regex=True)
         df[target_col] = pd.to_numeric(df[target_col], errors='coerce')
-        
-        # Handle missing values in target
         if df[target_col].isna().sum() > 0:
-            print(f"⚠️ Found {df[target_col].isna().sum()} missing values in target column")
+            print(f"⚠️ Dropping {df[target_col].isna().sum()} rows with missing target values")
             df = df.dropna(subset=[target_col])
-            print(f"✅ Dropped rows with missing target values, {df.shape[0]} rows remaining")
-        
-        # Try to identify important feature columns
-        
-        # For brand
-        brand_cols = ['Brand', 'brand', 'Bike Brand', 'Make', 'make', 'Manufacturer']
-        brand_col = next((col for col in brand_cols if col in df.columns), None)
-        
-        # For model
-        model_cols = ['Model', 'model', 'Variant', 'variant', 'Model Year', 'Variant/Model Year']
-        model_col = next((col for col in model_cols if col in df.columns), None)
-        
-        # For engine capacity
-        engine_cols = ['Engine Capacity', 'engine capacity', 'CC', 'Displacement', 'Engine Size', 'Engine Size (cc)']
-        engine_col = next((col for col in engine_cols if col in df.columns), None)
-        
-        # For registration date/year
-        reg_cols = ['Registration Date', 'reg date', 'Year', 'Year of Registration']
-        reg_col = next((col for col in reg_cols if col in df.columns), None)
-        
-        # For COE expiry
-        coe_cols = ['COE Expiry Date', 'COE expiry', 'COE Expiry Year']
-        coe_col = next((col for col in coe_cols if col in df.columns), None)
-        
-        # For mileage
-        mileage_cols = ['Mileage', 'mileage', 'Total Mileage', 'KM', 'Total Mileage (km)']
-        mileage_col = next((col for col in mileage_cols if col in df.columns), None)
-        
-        # For owners
-        owners_cols = ['No. of owners', 'Owners', 'Previous Owners', 'Number of Previous Owners']
-        owners_col = next((col for col in owners_cols if col in df.columns), None)
-        
-        # For category/classification
-        category_cols = ['Category', 'category', 'Type', 'Classification', 'Market Segment']
-        category_col = next((col for col in category_cols if col in df.columns), None)
-        
-        # Collect all identified columns
-        feature_cols = [col for col in [brand_col, model_col, engine_col, reg_col, coe_col, mileage_col, owners_col, category_col] 
-                      if col is not None]
-        
-        print(f"✅ Identified feature columns: {feature_cols}")
-        print(f"✅ Target column: {target_col}")
-        
-        # Prepare dataframe for modeling
-        df_clean = df[feature_cols + [target_col]].copy()
-        
-        # Keep a mapping of original column names to standardized column names
-        col_name_mapping = {}
-        
-        # Clean and prepare each column
-        for col in df_clean.columns:
-            # Skip target column
-            if col == target_col:
-                continue
-                
-            # Clean numeric columns
-            if col in [engine_col, mileage_col, owners_col]:
-                # Extract numeric values
-                df_clean[col] = df_clean[col].astype(str).str.replace(r'[^0-9.]', '', regex=True)
-                df_clean[col] = pd.to_numeric(df_clean[col], errors='coerce')
-                # Fill missing values with median
-                df_clean[col].fillna(df_clean[col].median(), inplace=True)
-                
-                # Standardize column name
-                if col == engine_col:
-                    col_name_mapping[col] = "Engine_Capacity"
-                elif col == mileage_col:
-                    col_name_mapping[col] = "Mileage"
-                elif col == owners_col:
-                    col_name_mapping[col] = "No_of_owners"
-            
-            # Handle date columns
-            if col in [reg_col, coe_col]:
-                try:
-                    # Try to convert to datetime first
-                    df_clean[col] = pd.to_datetime(df_clean[col], errors='coerce').dt.year
-                    # Fill missing values with median
-                    df_clean[col].fillna(df_clean[col].median(), inplace=True)
-                except Exception as e:
-                    print(f"⚠️ Error processing date column {col}: {e}")
-                    # If conversion fails, try to extract year with regex
-                    df_clean[col] = df_clean[col].astype(str).str.extract(r'(\d{4})').astype(float)
-                    df_clean[col].fillna(df_clean[col].median(), inplace=True)
-                
-                # Standardize column name
-                if col == reg_col:
-                    col_name_mapping[col] = "Registration_Date"
-                elif col == coe_col:
-                    col_name_mapping[col] = "COE_Expiry_Date"
-            
-            # Encode categorical columns
-            if col in [brand_col, model_col, category_col]:
-                df_clean[col] = df_clean[col].astype(str)
-                le = LabelEncoder()
-                df_clean[col] = le.fit_transform(df_clean[col])
-                self.label_encoders[col] = le
-                
-                # Standardize column name
-                if col == brand_col:
-                    col_name_mapping[col] = "Brand"
-                elif col == model_col:
-                    col_name_mapping[col] = "Model"
-                elif col == category_col:
-                    col_name_mapping[col] = "Category"
-        
-        # Rename columns with standardized names
-        df_standardized = df_clean.copy()
-        df_standardized.rename(columns=col_name_mapping, inplace=True)
-        
-        # Store the standardized column names for future reference
-        self.column_name_mapping = col_name_mapping
-        print("✅ Standardized column names:", col_name_mapping)
-        
-        print("✅ Data cleaning complete")
-        
-        # Final check for any remaining NaN values
-        if df_standardized.isna().sum().sum() > 0:
-            print("⚠️ There are still NaN values in the cleaned dataframe. Filling with appropriate values...")
-            # For numeric columns, fill with median
-            numeric_cols = df_standardized.select_dtypes(include=['number']).columns
-            for col in numeric_cols:
-                df_standardized[col].fillna(df_standardized[col].median(), inplace=True)
-            
-            # For categorical columns, fill with mode
-            cat_cols = df_standardized.select_dtypes(exclude=['number']).columns
-            for col in cat_cols:
-                df_standardized[col].fillna(df_standardized[col].mode()[0], inplace=True)
-        
-        # Split features and target
-        X = df_standardized.drop(columns=[target_col])
-        y = df_standardized[target_col]
-        
-        # Split the data
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        
-        # Scale the features
-        self.scaler = StandardScaler()
-        X_train_scaled = self.scaler.fit_transform(X_train)
-        X_test_scaled = self.scaler.transform(X_test)
-        
-        print(f"✅ Data split and scaled: {X_train.shape[0]} training samples, {X_test.shape[0]} test samples")
-        print(f"✅ Feature set: {X.columns.tolist()}")
-        
-        # Store feature names for later use
-        self.feature_names = X.columns.tolist()
-        
-        return X_train_scaled, X_test_scaled, y_train, y_test, X.columns.tolist()
-    
-    def standardize_feature_names(self, input_data):
-        """Ensure consistent feature naming"""
-        
-        # Create a standardized version of the input data
-        standardized = {}
-        
-        # Map common variations to the exact names used during training
-        name_mapping = {
+        features = [col for col in df.columns if col != target_col]
+        print(f"✅ Identified feature columns: {features}")
+        df = clean_columns(df)
+        column_map = {
             'Engine Capacity': 'Engine_Capacity',
             'Registration Date': 'Registration_Date',
             'COE Expiry Date': 'COE_Expiry_Date',
-            'No. of owners': 'No_of_owners',
-            'Mileage': 'Mileage',
-            'Brand': 'Brand',
-            'Category': 'Category'
+            'No. of owners': 'No_of_owners'
         }
-        
-        # Apply mapping
-        for key, value in input_data.items():
-            if key in name_mapping:
-                standardized[name_mapping[key]] = value
-            else:
-                standardized[key] = value
-                
-        return standardized
-    
+        for old_name, new_name in column_map.items():
+            if old_name in df.columns:
+                df.rename(columns={old_name: new_name}, inplace=True)
+                self.column_name_mapping[old_name] = new_name
+        if 'COE_Expiry_Date' in df.columns:
+            df['Years_Left'] = df['COE_Expiry_Date'] - Constants.CURRENT_YEAR
+        if 'No_of_owners' in df.columns:
+            df['Owner_Impact'] = np.log(df['No_of_owners'] + 1)
+        categorical_cols = ['Brand', 'Category']
+        for col in categorical_cols:
+            if col in df.columns:
+                le = LabelEncoder()
+                df[col] = le.fit_transform(df[col].astype(str))
+                self.label_encoders[col] = le
+        df = pd.get_dummies(df, columns=categorical_cols)
+        print(f"✅ Applied one-hot encoding to {categorical_cols}, resulting in {df.shape[1]} features")
+        df = df.fillna(df.median(numeric_only=True))
+        text_columns = ['Bike Name', 'Model', 'Classification']
+        for col in text_columns:
+            if col in df.columns:
+                print(f"✅ Removing text column: {col}")
+                df = df.drop(columns=[col])
+        X = df[[col for col in df.columns if col != target_col]]
+        y = df[target_col]
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        for col in X_train.columns:
+            if X_train[col].dtype == 'object':
+                print(f"⚠️ Warning: Column '{col}' contains string values. Converting to numeric or removing.")
+                try:
+                    X_train[col] = pd.to_numeric(X_train[col], errors='coerce')
+                    X_test[col] = pd.to_numeric(X_test[col], errors='coerce')
+                    X_train[col] = X_train[col].fillna(X_train[col].median())
+                    X_test[col] = X_test[col].fillna(X_train[col].median())
+                except:
+                    print(f"❌ Cannot convert column '{col}' to numeric. Dropping this column.")
+                    X_train = X_train.drop(columns=[col])
+                    X_test = X_test.drop(columns=[col])
+        self.feature_names = X.columns.tolist()
+        joblib.dump(self.feature_names, os.path.join(self.models_dir, "feature_names.pkl"))
+        print(f"✅ Saved {X.shape[1]} feature names: {self.feature_names}")
+        print(f"✅ Data split: {X_train.shape[0]} training samples, {X_test.shape[0]} test samples")
+        print(f"✅ Features: {self.feature_names}")
+        return X_train.to_numpy(), X_test.to_numpy(), y_train, y_test, self.feature_names
+
     def train_model(self, X_train, X_test, y_train, y_test, feature_names, tune_hyperparams=True):
-        """Train an SVM model for motorcycle price prediction"""
+        """Train an SVM model and save a package of components for prediction."""
         print("\n🔄 Training SVM model for motorcycle price prediction...")
         start_time = time.time()
-        
+        print(f"⚠️ Initial training data shape: {X_train.shape}")
+        temp_scaler = RobustScaler()
+        X_train_scaled_temp = temp_scaler.fit_transform(X_train)
+        mask = remove_outliers_mask(X_train_scaled_temp, y_train)
+        X_train_use = X_train[mask]
+        y_train_use = y_train[mask]
+        print(f"⚠️ Data shape after outlier removal: {X_train_use.shape}")
+        use_log_transform = True
+        if use_log_transform:
+            print("📊 Using log transformation for prices")
+            y_train_log = np.log1p(y_train_use)
+        else:
+            y_train_log = y_train_use
         if tune_hyperparams:
-            print("📊 Performing hyperparameter tuning for SVM...")
-            param_grid = {
-                'C': [1, 10, 100, 1000],
-                'gamma': ['auto', 0.01, 0.1, 1],
-                'kernel': ['rbf', 'poly'],
-                'epsilon': [0.01, 0.1, 0.2]
+            print("📊 Performing hyperparameter tuning for SVM using RandomizedSearchCV...")
+            pipeline = Pipeline([
+                ('scaler', RobustScaler()),
+                ('feature_selection', SelectKBest(f_regression, k=20)),
+                ('svm', SVR(kernel='rbf', cache_size=1000))
+            ])
+            param_dist = {
+                'svm__C': loguniform(1e2, 1e4),
+                'svm__gamma': loguniform(1e-4, 1e-2),
+                'feature_selection__k': [15, 20, 25, 30]
             }
-            
-            # Use GridSearchCV to find the best parameters
-            grid_search = GridSearchCV(
-                SVR(),
-                param_grid,
-                cv=5,
+            n_samples = X_train_use.shape[0]
+            if n_samples < 20:
+                print(f"⚠️ Low sample count ({n_samples}). Using leave-one-out cross-validation.")
+                cv = LeaveOneOut()
+            elif n_samples < 50:
+                print(f"⚠️ Low sample count ({n_samples}). Using 3-fold cross-validation.")
+                cv = 3
+            else:
+                cv = 5
+            random_search = RandomizedSearchCV(
+                pipeline,
+                param_distributions=param_dist,
+                n_iter=min(50, n_samples//2),
+                cv=cv,
                 scoring='neg_mean_absolute_error',
                 verbose=1,
-                n_jobs=-1  # Use all available cores
+                n_jobs=-1,
+                random_state=42
             )
-            
-            grid_search.fit(X_train, y_train)
-            
-            # Get the best model
-            self.model = grid_search.best_estimator_
-            print(f"✅ Best parameters found: {grid_search.best_params_}")
+            random_search.fit(X_train_use, y_train_log if use_log_transform else y_train_use)
+            self.model = random_search.best_estimator_
+            print(f"✅ Best parameters found: {random_search.best_params_}")
         else:
-            print("📊 Training SVM with enhanced parameters...")
-            # Use improved parameters for better sensitivity to inputs
-            self.model = SVR(
-                C=100,           # Higher C for better flexibility
-                gamma='auto',    # Auto gamma to adapt to data scale
-                kernel='rbf',    # RBF kernel for non-linear relationships
-                epsilon=0.1      # Reduced epsilon for more sensitivity to small changes
-            )
-            self.model.fit(X_train, y_train)
-        
-        # Calculate training time
+            print("📊 Training SVM with preset parameters...")
+            pipeline = Pipeline([
+                ('scaler', RobustScaler()),
+                ('feature_selection', SelectKBest(f_regression, k=20)),
+                ('svm', SVR(kernel='rbf', C=100, gamma='scale', epsilon=0.1,
+                            cache_size=1000, tol=1e-3, max_iter=-1))
+            ])
+            pipeline.fit(X_train_use, y_train_log if use_log_transform else y_train_use)
+            self.model = pipeline
         training_time = time.time() - start_time
         print(f"⏱️ Training completed in {training_time:.2f} seconds")
-        
-        # Evaluate model
-        y_pred = self.model.predict(X_test)
+        if use_log_transform:
+            y_pred_log = self.model.predict(X_test)
+            y_pred = np.expm1(y_pred_log)
+        else:
+            y_pred = self.model.predict(X_test)
         mae = mean_absolute_error(y_test, y_pred)
         mse = mean_squared_error(y_test, y_pred)
         rmse = np.sqrt(mse)
         r2 = r2_score(y_test, y_pred)
-        
         print("\n📈 Model Evaluation Results:")
         print(f"Mean Absolute Error (MAE): ${mae:.2f}")
         print(f"Root Mean Squared Error (RMSE): ${rmse:.2f}")
         print(f"R² Score: {r2:.4f}")
-        
-        # Save model and preprocessing objects
         print("\n💾 Saving model and preprocessing objects...")
         joblib.dump(self.model, os.path.join(self.models_dir, "svm_regressor.pkl"))
+        if hasattr(self.model, 'named_steps') and 'scaler' in self.model.named_steps:
+            self.scaler = self.model.named_steps['scaler']
+        else:
+            print("⚠️ Warning: Could not extract scaler from pipeline, creating a new one")
+            self.scaler = RobustScaler()
+            self.scaler.fit(X_train)
         joblib.dump(self.scaler, os.path.join(self.models_dir, "scaler.pkl"))
-        joblib.dump(self.label_encoders, os.path.join(self.models_dir, "label_encoders.pkl"))
-        
-        # Save standardized feature names
         joblib.dump(self.feature_names, os.path.join(self.models_dir, "feature_names.pkl"))
-        
-        # Save column name mapping for consistent feature naming
         joblib.dump(self.column_name_mapping, os.path.join(self.models_dir, "column_name_mapping.pkl"))
-        
-        # Create a "selected_model.txt" file with "SVM" to set it as the default model
-        with open(os.path.join(self.base_dir, "selected_model.txt"), "w") as f:
-            f.write("SVM")
-        
-        # Create a model metadata file to help with prediction
-        model_metadata = {
-            "feature_names": self.feature_names,
-            "column_mapping": self.column_name_mapping,
-            "model_type": "SVR",
-            "kernel": self.model.kernel,
-            "C": self.model.C,
-            "gamma": self.model.gamma,
-            "epsilon": self.model.epsilon,
-            "training_date": time.strftime("%Y-%m-%d %H:%M:%S")
-        }
-        
-        joblib.dump(model_metadata, os.path.join(self.models_dir, "svm_model_metadata.pkl"))
-        
-        print("✅ Model and preprocessing objects saved successfully")
-        
-        # Visualize results if enabled
-        if self.visualize:
-            self.visualize_results(y_test, y_pred, feature_names)
-        
-        # Test model responsiveness - this is crucial to ensure the model works properly
-        self.test_model_responsiveness()
-        
-        return {
+        # Save all components together in a package
+        model_package = {
             'model': self.model,
             'scaler': self.scaler,
+            'label_encoders': self.label_encoders,
+            'feature_names': feature_names
+        }
+        joblib.dump(model_package, os.path.join(self.models_dir, "svm_package.pkl"))
+        with open(os.path.join(os.path.dirname(self.base_dir), "selected_model.txt"), "w") as f:
+            f.write("SVM")
+        model_metadata = {
+            "feature_names": self.feature_names,
+            "model_type": "SVR",
+            "kernel": self.model.named_steps['svm'].kernel,
+            "C": self.model.named_steps['svm'].C,
+            "gamma": self.model.named_steps['svm'].gamma,
+            "epsilon": self.model.named_steps['svm'].epsilon,
+            "log_transform": use_log_transform,
+            "training_date": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "use_polynomial_features": False
+        }
+        joblib.dump(model_metadata, os.path.join(self.models_dir, "svm_model_metadata.pkl"))
+        print("✅ Model and preprocessing objects saved successfully")
+        if self.results_dir is not None:
+            self.visualize_results(y_test, y_pred, feature_names)
+        self.test_model_responsiveness()
+        return {
+            'model': self.model,
             'feature_names': self.feature_names,
             'mae': mae,
             'rmse': rmse,
             'r2': r2,
-            'training_time': training_time
+            'training_time': training_time,
+            'log_transform': use_log_transform
         }
-    
-    def test_model_responsiveness(self):
-        """Test the SVM model's responsiveness to different inputs"""
-        print("\n🧪 Testing model responsiveness with different inputs...")
-        
-        if not hasattr(self, 'model') or not hasattr(self, 'scaler') or not hasattr(self, 'feature_names'):
-            print("❌ Model, scaler, or feature names not found. Cannot test responsiveness.")
-            return
-        
-        # Create test cases with different input variations
-        current_year = 2025
-        test_cases = [
-            # Base case
-            {
-                'Engine_Capacity': 150, 
-                'Registration_Date': 2023, 
-                'COE_Expiry_Date': current_year + 5, 
-                'Mileage': 5000, 
-                'No_of_owners': 1, 
-                'Brand': 0, 
-                'Category': 0
-            },
-            # Different owner count
-            {
-                'Engine_Capacity': 150, 
-                'Registration_Date': 2023, 
-                'COE_Expiry_Date': current_year + 5, 
-                'Mileage': 5000, 
-                'No_of_owners': 3, 
-                'Brand': 0, 
-                'Category': 0
-            },
-            # Different COE expiry
-            {
-                'Engine_Capacity': 150, 
-                'Registration_Date': 2023, 
-                'COE_Expiry_Date': current_year + 2, 
-                'Mileage': 5000, 
-                'No_of_owners': 1, 
-                'Brand': 0, 
-                'Category': 0
-            },
-            # Different mileage
-            {
-                'Engine_Capacity': 150, 
-                'Registration_Date': 2023, 
-                'COE_Expiry_Date': current_year + 5, 
-                'Mileage': 50000, 
-                'No_of_owners': 1, 
-                'Brand': 0, 
-                'Category': 0
-            },
-            # Combined differences
-            {
-                'Engine_Capacity': 150, 
-                'Registration_Date': 2023, 
-                'COE_Expiry_Date': current_year + 8, 
-                'Mileage': 15000, 
-                'No_of_owners': 2, 
-                'Brand': 0, 
-                'Category': 0
-            }
-        ]
-        
-        # Function to prepare input for prediction
-        def prepare_input(input_dict):
-            # Ensure all required features are present
-            X = []
-            for feature in self.feature_names:
-                if feature in input_dict:
-                    X.append(input_dict[feature])
-                else:
-                    print(f"⚠️ Missing feature {feature} in test input")
-                    X.append(0)  # Default value
-            return np.array(X).reshape(1, -1)
-        
-        # Test each case
-        predictions = []
-        for i, test_case in enumerate(test_cases):
-            X = prepare_input(test_case)
-            X_scaled = self.scaler.transform(X)
-            pred = self.model.predict(X_scaled)[0]
-            predictions.append(pred)
-            
-            print(f"Test case {i+1}:")
-            for k, v in test_case.items():
-                print(f"  {k}: {v}")
-            print(f"  Predicted price: ${pred:.2f}")
-            print()
-        
-        # Check if predictions are different
-        prediction_set = set([round(p, 2) for p in predictions])
-        if len(prediction_set) > 1:
-            print("✅ SVM model is responsive to different inputs!")
-            print(f"  Unique predictions: {prediction_set}")
-        else:
-            print("❌ WARNING: SVM model is NOT responsive to different inputs!")
-            print("  All test cases produced the same prediction")
-            
-            # Attempt to fix unresponsive model
-            if predictions[0] == predictions[1] and predictions[0] == predictions[2]:
-                print("🔄 Attempting to create responsive wrapper function for app_v2.py...")
-                self.create_responsive_wrapper()
-    
-    def create_responsive_wrapper(self):
-        """Create a wrapper function to make predictions responsive"""
-        # Create a file with a wrapper function
-        wrapper_path = os.path.join(self.base_dir, "svm_responsive_wrapper.py")
-        
-        wrapper_code = """
-# SVM Responsive Wrapper
-# This wrapper ensures that predictions respond to input changes
-# even if the underlying model is not sensitive enough
 
-import numpy as np
-import os
-import joblib
-
-class SVMResponsiveWrapper:
-    def __init__(self):
-        self.base_dir = os.path.dirname(os.path.abspath(__file__))
-        self.models_dir = os.path.join(self.base_dir, "saved_models")
-        
-        # Load the model and preprocessing objects
-        self.model = joblib.load(os.path.join(self.models_dir, "svm_regressor.pkl"))
-        self.scaler = joblib.load(os.path.join(self.models_dir, "scaler.pkl"))
-        self.feature_names = joblib.load(os.path.join(self.models_dir, "feature_names.pkl"))
-    
-    def standardize_feature_names(self, input_data):
-        # Map common variations to the exact names used during training
-        name_mapping = {
-            'Engine Capacity': 'Engine_Capacity',
-            'Registration Date': 'Registration_Date',
-            'COE Expiry Date': 'COE_Expiry_Date',
-            'No. of owners': 'No_of_owners',
-            'Mileage': 'Mileage',
-            'Brand': 'Brand',
-            'Category': 'Category'
-        }
-        
-        # Apply mapping
-        standardized = {}
-        for key, value in input_data.items():
-            if key in name_mapping:
-                standardized[name_mapping[key]] = value
-            else:
-                standardized[key] = value
-                
-        return standardized
-    
-    def predict(self, input_data):
-        # Standardize feature names
-        input_data = self.standardize_feature_names(input_data)
-        
-        # Prepare input array
-        X = []
-        for feature in self.feature_names:
-            if feature in input_data:
-                X.append(input_data[feature])
-            else:
-                X.append(0)  # Default value
-        
-        X = np.array(X).reshape(1, -1)
-        
-        # Scale input
-        X_scaled = self.scaler.transform(X)
-        
-        # Get base prediction
-        base_prediction = self.model.predict(X_scaled)[0]
-        
-        # Apply adjustments based on key features to ensure responsiveness
-        # 1. COE expiry adjustment
-        if 'COE_Expiry_Date' in input_data:
-            current_year = 2025
-            years_left = max(0, input_data['COE_Expiry_Date'] - current_year)
-            coe_factor = 1.0 + (years_left * 0.03)  # 3% price increase per year of COE left
-            base_prediction *= coe_factor
-        
-        # 2. Owner count adjustment
-        if 'No_of_owners' in input_data:
-            owner_count = input_data['No_of_owners']
-            if owner_count > 1:
-                owner_factor = 1.0 - ((owner_count - 1) * 0.05)  # 5% price decrease per additional owner
-                base_prediction *= owner_factor
-        
-        # 3. Mileage adjustment
-        if 'Mileage' in input_data:
-            mileage = input_data['Mileage']
-            if mileage > 25000:
-                mileage_factor = 1.0 - ((mileage - 25000) / 100000)  # Up to 75% reduction for very high mileage
-                mileage_factor = max(0.75, mileage_factor)  # Cap at 25% reduction
-                base_prediction *= mileage_factor
-        
-        return base_prediction
-
-# Function to use in app_v2.py to ensure responsive predictions
-def get_responsive_prediction(input_data):
-    wrapper = SVMResponsiveWrapper()
-    return wrapper.predict(input_data)
-"""
-        
-        with open(wrapper_path, "w") as f:
-            f.write(wrapper_code)
-        
-        print(f"✅ Created responsive wrapper at: {wrapper_path}")
-        print("To use the wrapper in app_v2.py, add this code:")
-        print("```python")
-        print("from svm_responsive_wrapper import get_responsive_prediction")
-        print("")
-        print("# In the predict_price function, add this code after the standard prediction:")
-        print("if model_name == 'svm':")
-        print("    # Get a responsive prediction that adapts to input changes")
-        print("    predicted_price = get_responsive_prediction(input_data)")
-        print("```")
-    
     def visualize_results(self, y_test, y_pred, feature_names):
-        """Create visualizations of model performance"""
         print("\n📊 Creating visualizations...")
-        
-        # 1. Actual vs Predicted
+        if self.results_dir is None:
+            print("⚠️ No results directory specified, skipping visualizations")
+            return
         plt.figure(figsize=(10, 6))
         plt.scatter(y_test, y_pred, alpha=0.5)
         plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--')
@@ -755,8 +487,6 @@ def get_responsive_prediction(input_data):
         plt.title('SVM Model: Actual vs Predicted Motorcycle Prices')
         plt.tight_layout()
         plt.savefig(os.path.join(self.results_dir, 'svm_actual_vs_predicted.png'))
-        
-        # 2. Error Distribution
         errors = y_test - y_pred
         plt.figure(figsize=(10, 6))
         sns.histplot(errors, kde=True)
@@ -766,11 +496,6 @@ def get_responsive_prediction(input_data):
         plt.axvline(x=0, color='r', linestyle='--')
         plt.tight_layout()
         plt.savefig(os.path.join(self.results_dir, 'svm_error_distribution.png'))
-        
-        # 3. Feature importance (SVR doesn't provide feature importance directly)
-        # We can approximate importance by evaluating model with permutated features
-        
-        # 4. Residual Plot
         plt.figure(figsize=(10, 6))
         sns.scatterplot(x=y_pred, y=errors)
         plt.axhline(y=0, color='r', linestyle='--')
@@ -779,215 +504,96 @@ def get_responsive_prediction(input_data):
         plt.title('SVM Model: Residual Plot')
         plt.tight_layout()
         plt.savefig(os.path.join(self.results_dir, 'svm_residual_plot.png'))
-        
-        # 5. Create a model summary report
-        performance_summary = f"""
-# SVM Model for Motorcycle Price Prediction
-
-## Model Overview
-- **Algorithm**: Support Vector Machine (SVR)
-- **Implementation**: scikit-learn
-- **Kernel**: {self.model.kernel}
-- **C (Regularization)**: {self.model.C}
-- **Gamma**: {self.model.gamma}
-- **Epsilon**: {self.model.epsilon}
-
-## Performance Metrics
-- **Mean Absolute Error (MAE)**: ${mean_absolute_error(y_test, y_pred):.2f}
-- **Root Mean Squared Error (RMSE)**: ${np.sqrt(mean_squared_error(y_test, y_pred)):.2f}
-- **R² Score**: {r2_score(y_test, y_pred):.4f}
-
-## Feature Summary
-The model was trained using the following features:
-{", ".join(feature_names)}
-
-## Visualization Summary
-- **Actual vs Predicted**: Shows the relationship between actual and predicted motorcycle prices
-- **Error Distribution**: Shows the distribution of prediction errors
-- **Residual Plot**: Shows the relationship between predictions and their errors
-
-## Model Advantages
-- SVM can capture non-linear relationships in the data
-- Robust to outliers when properly tuned
-- Works well with both categorical (encoded) and numerical features
-
-## Recommendations
-- Consider feature engineering to capture more complex relationships
-- Experiment with different kernel functions for potentially better performance
-- Regularly update the model as new data becomes available
-"""
-        
-        with open(os.path.join(self.results_dir, 'svm_performance_summary.md'), 'w') as f:
-            f.write(performance_summary)
-        
         print("✅ Visualizations created successfully")
-    
-    def compare_with_other_models(self):
-        """Compare SVM with other models in the system"""
-        print("\n📊 Comparing SVM with other models...")
-        
-        # Load metrics for other available models
-        other_models = {
-            "random_forest": {"color": "green"},
-            "xgboost": {"color": "orange"},
-            "lightgbm": {"color": "purple"}
-        }
-        
-        # Ensure SVM model has been trained
-        if not hasattr(self, 'model') or self.model is None:
-            print("⚠️ SVM model has not been trained yet. Train it first.")
-            return
-        
-        # Load dataset
-        X_train, X_test, y_train, y_test, _ = self.load_data()
-        
-        # Get SVM predictions
-        svm_preds = self.model.predict(X_test)
-        svm_mae = mean_absolute_error(y_test, svm_preds)
-        svm_rmse = np.sqrt(mean_squared_error(y_test, svm_preds))
-        svm_r2 = r2_score(y_test, svm_preds)
-        
-        # Store metrics for all models
-        mae_metrics = {'SVM': svm_mae}
-        rmse_metrics = {'SVM': svm_rmse}
-        r2_metrics = {'SVM': svm_r2}
-        
-        # Try to load other models and calculate their metrics
-        for model_name in other_models:
-            model_path = os.path.join(self.models_dir, f"{model_name}_regressor.pkl")
-            if os.path.exists(model_path):
+
+    def test_model_responsiveness(self):
+        print("\n🧪 Testing model responsiveness for SVM...")
+        try:
+            package_path = os.path.join(self.models_dir, "svm_package.pkl")
+            if os.path.exists(package_path):
+                package = joblib.load(package_path)
+                predictor = SVMPredictor(**package)
+                print("✅ Loaded model package")
+            else:
+                predictor = SVMPredictor(
+                    self.model,
+                    joblib.load(os.path.join(self.models_dir, "scaler.pkl")),
+                    self.label_encoders,
+                    joblib.load(os.path.join(self.models_dir, "feature_names.pkl"))
+                )
+                print("✅ Loaded individual model components")
+            test_cases = [
+                {
+                    'Engine_Capacity': 150, 
+                    'Registration_Date': 2023, 
+                    'COE_Expiry_Date': 2030, 
+                    'Mileage': 5000, 
+                    'No_of_owners': 1,
+                    'Brand': 'Honda',
+                    'Category': 'Sport Bikes'
+                },
+                {
+                    'Engine_Capacity': 600, 
+                    'Registration_Date': 2020, 
+                    'COE_Expiry_Date': 2028, 
+                    'Mileage': 15000, 
+                    'No_of_owners': 2,
+                    'Brand': 'Yamaha',
+                    'Category': 'Cruiser'
+                }
+            ]
+            predictions = []
+            for i, test_case in enumerate(test_cases):
                 try:
-                    model = joblib.load(model_path)
-                    preds = model.predict(X_test)
-                    mae_metrics[model_name.title()] = mean_absolute_error(y_test, preds)
-                    rmse_metrics[model_name.title()] = np.sqrt(mean_squared_error(y_test, preds))
-                    r2_metrics[model_name.title()] = r2_score(y_test, preds)
+                    pred = predictor.predict(test_case)
+                    if pred is not None:
+                        predictions.append(pred)
+                        print(f"Test case {i+1} prediction: ${pred:.2f}")
+                    else:
+                        print(f"Test case {i+1} prediction failed")
                 except Exception as e:
-                    print(f"⚠️ Error loading {model_name} model: {e}")
-        
-        # Create comparison charts
-        # 1. MAE Comparison
-        plt.figure(figsize=(10, 6))
-        bars = plt.bar(mae_metrics.keys(), mae_metrics.values())
-        plt.xlabel('Model')
-        plt.ylabel('Mean Absolute Error ($)')
-        plt.title('MAE Comparison Across Models (Lower is Better)')
-        
-        # Color the bars
-        bars[0].set_color('blue')  # SVM bar
-        for i, (model_name, _) in enumerate(mae_metrics.items()):
-            if i > 0 and model_name.lower() in other_models:
-                bars[i].set_color(other_models[model_name.lower()]['color'])
-        
-        plt.tight_layout()
-        plt.savefig(os.path.join(self.results_dir, 'model_mae_comparison.png'))
-        
-        # 2. RMSE Comparison
-        plt.figure(figsize=(10, 6))
-        bars = plt.bar(rmse_metrics.keys(), rmse_metrics.values())
-        plt.xlabel('Model')
-        plt.ylabel('Root Mean Squared Error ($)')
-        plt.title('RMSE Comparison Across Models (Lower is Better)')
-        
-        # Color the bars
-        bars[0].set_color('blue')  # SVM bar
-        for i, (model_name, _) in enumerate(rmse_metrics.items()):
-            if i > 0 and model_name.lower() in other_models:
-                bars[i].set_color(other_models[model_name.lower()]['color'])
-        
-        plt.tight_layout()
-        plt.savefig(os.path.join(self.results_dir, 'model_rmse_comparison.png'))
-        
-        # 3. R² Comparison
-        plt.figure(figsize=(10, 6))
-        bars = plt.bar(r2_metrics.keys(), r2_metrics.values())
-        plt.xlabel('Model')
-        plt.ylabel('R² Score')
-        plt.title('R² Comparison Across Models (Higher is Better)')
-        
-        # Color the bars
-        bars[0].set_color('blue')  # SVM bar
-        for i, (model_name, _) in enumerate(r2_metrics.items()):
-            if i > 0 and model_name.lower() in other_models:
-                bars[i].set_color(other_models[model_name.lower()]['color'])
-        
-        plt.tight_layout()
-        plt.savefig(os.path.join(self.results_dir, 'model_r2_comparison.png'))
-        
-        print("✅ Model comparison visualizations created successfully")
-        
-        # Return the comparison metrics
-        return {
-            'mae': mae_metrics,
-            'rmse': rmse_metrics,
-            'r2': r2_metrics
-        }
+                    print(f"⚠️ Error with test case {i+1}: {e}")
+                    traceback.print_exc()
+            if len(predictions) >= 2:
+                unique_preds = set([round(p, 2) for p in predictions])
+                is_responsive = len(unique_preds) > 1
+                print(f"✅ SVM model is {'responsive' if is_responsive else 'NOT responsive'} to different inputs")
+                print(f"  Unique predictions: {unique_preds}")
+                return is_responsive
+            else:
+                print("⚠️ Not enough successful predictions to test responsiveness")
+                return False
+        except Exception as e:
+            print(f"⚠️ Error in test_model_responsiveness: {e}")
+            traceback.print_exc()
+            return False
 
 def main():
-    """Main function to train and evaluate the SVM model"""
     print("🏍️ Starting SVM model training for motorcycle price prediction...")
-    
-    # Create SVM trainer instance
     trainer = SVMMotorbikeTrainer(visualize=True)
-    
-    # Load and preprocess data
-    X_train, X_test, y_train, y_test, feature_names = trainer.load_data()
-    
-    if X_train is not None:
-        # Train SVM model
-        result = trainer.train_model(
-            X_train, X_test, y_train, y_test, feature_names,
-            tune_hyperparams=True  # Set to True for best results, False for faster training
-        )
-        
-        # Compare with other models
-        trainer.compare_with_other_models()
-        
+    try:
+        X_train, X_test, y_train, y_test, feature_names = trainer.load_data()
+    except Exception as e:
+        print(f"❌ Error during data loading: {e}")
+        traceback.print_exc()
+        return
+    if X_train is None or y_train is None or X_train.shape[0] == 0:
+        print("❌ Data loading/preprocessing did not produce valid training data.")
+        return
+    print(f"✅ Successfully loaded data with {X_train.shape[0]} training samples and {X_train.shape[1]} features.")
+    try:
+        result = trainer.train_model(X_train, X_test, y_train, y_test, feature_names, tune_hyperparams=True)
+        if result is None:
+            print("⚠️ Model training with hyperparameter tuning failed. Trying without tuning...")
+            result = trainer.train_model(X_train, X_test, y_train, y_test, feature_names, tune_hyperparams=False)
+    except Exception as e:
+        print(f"❌ Error during model training: {e}")
+        traceback.print_exc()
+        return
+    if result is not None:
         print("\n✅ SVM model training and evaluation complete!")
-        
-        # Generate additional test predictions to verify model responsiveness
-        print("\n🧪 Testing model responsiveness with different inputs...")
-        test_inputs = [
-            {'Engine_Capacity': 150, 'Registration_Date': 2023, 'COE_Expiry_Date': 2030, 'Mileage': 5000, 'No_of_owners': 1, 'Brand': 0, 'Category': 0},
-            {'Engine_Capacity': 150, 'Registration_Date': 2023, 'COE_Expiry_Date': 2030, 'Mileage': 5000, 'No_of_owners': 2, 'Brand': 0, 'Category': 0},
-            {'Engine_Capacity': 150, 'Registration_Date': 2023, 'COE_Expiry_Date': 2027, 'Mileage': 5000, 'No_of_owners': 1, 'Brand': 0, 'Category': 0},
-            {'Engine_Capacity': 150, 'Registration_Date': 2023, 'COE_Expiry_Date': 2033, 'Mileage': 5000, 'No_of_owners': 1, 'Brand': 0, 'Category': 0},
-        ]
-
-        # Verify predictions are different for each input
-        scaler = result['scaler']
-        model = result['model']
-        feature_names = result['feature_names']
-        
-        predictions = []
-        for i, test_input in enumerate(test_inputs):
-            # Convert to array in the right feature order
-            input_array = []
-            for feature in feature_names:
-                input_array.append(test_input.get(feature, 0))
-                
-            input_array = np.array(input_array).reshape(1, -1)
-            
-            # Apply scaling
-            input_scaled = scaler.transform(input_array)
-            
-            # Predict
-            prediction = model.predict(input_scaled)[0]
-            predictions.append(prediction)
-            
-            print(f"Test {i+1}: {test_input}")
-            print(f"Prediction: ${prediction:.2f}")
-            print()
-
-        # Verify predictions are different
-        prediction_set = set([round(p, 2) for p in predictions])
-        if len(prediction_set) > 1:
-            print("✅ SVM model is responsive to different inputs!")
-            print(f"Unique predictions: {prediction_set}")
-        else:
-            print("❌ SVM model is NOT responsive to different inputs. Fallback wrapper has been created.")
     else:
-        print("❌ Data loading/preprocessing failed. Cannot train model.")
+        print("❌ Model training failed.")
 
 if __name__ == "__main__":
     main()
