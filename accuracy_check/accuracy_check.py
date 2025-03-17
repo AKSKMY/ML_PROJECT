@@ -148,6 +148,7 @@ if os.path.exists(poly_path):
     X = poly.transform(X)
 
 print("\n✅ Data preprocessing complete. Final shape of X:", X.shape)
+print("\n✅ Data preprocessing complete. Final columns in X:", X.columns.tolist())
 
 # -------------------------------------------------------------------------
 # 6) LOAD EACH MODEL, PREDICT, AND COMPUTE REGRESSION METRICS
@@ -204,4 +205,5 @@ if results:
     print("\nPerformance of All Regressor Models:")
     print(results_df.to_string(index=False))
 else:
+    print("\nNo models were evaluated because none were found or loaded.")
     print("\nNo models were evaluated because none were found or loaded.")
