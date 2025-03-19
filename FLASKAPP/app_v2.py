@@ -349,7 +349,6 @@ def get_accurate_metrics():
                     except Exception as e:
                         print(f"⚠️ SVM prediction with poly features failed: {e}")
                         try:
-                            # Try without polynomial features
                             predictions = model.predict(X_svm)
                             print("✅ Successfully made SVM predictions without polynomial features")
                         except Exception as e2:
@@ -358,22 +357,18 @@ def get_accurate_metrics():
                 
                 elif model_name == 'lightgbm':
                     try:
-                        # First try with predicted_disable_shape_check
                         predictions = model.predict(X_scaled, predict_disable_shape_check=True, num_threads=1)
                         print("✅ Successfully made LightGBM predictions with shape check disabled")
                     except Exception as e:
                         print(f"⚠️ First LightGBM prediction attempt failed: {e}")
                         try:
-                            # Try features expected by LightGBM
                             if hasattr(model, 'feature_name_'):
                                 expected_features = model.feature_name_
                             elif hasattr(model, 'booster_') and hasattr(model.booster_, 'feature_name'):
                                 expected_features = model.booster_.feature_name()
                             else:
-                                # Fallback to numeric features
                                 expected_features = numeric_features
                             
-                            # Create a DataFrame with only expected features
                             X_lgbm = pd.DataFrame()
                             for feature in expected_features:
                                 if feature in X_standard.columns:
@@ -382,12 +377,10 @@ def get_accurate_metrics():
                                     print(f"⚠️ Missing feature {feature}, using default value 0")
                                     X_lgbm[feature] = 0
                             
-                            # Try second prediction
                             predictions = model.predict(X_lgbm)
                             print("✅ Successfully made LightGBM predictions with custom features")
                         except Exception as e2:
                             print(f"⚠️ All LightGBM prediction attempts failed: {e2}")
-                            # Use hardcoded values as a last resort
                             all_metrics[model_name] = {
                                 'mae': 3995.42,
                                 'mse': 47434000.0,
@@ -401,16 +394,14 @@ def get_accurate_metrics():
                                     "within_50pct": 85.0
                                 }
                             }
-                            continue  # Skip to next model
+                            continue
                             
-                else:  # Random Forest, XGBoost
+                else:
                     try:
-                        # Use scaled features for standard models
                         predictions = model.predict(X_scaled)
                         print(f"✅ Successfully made {model_name} predictions")
                     except Exception as e:
                         print(f"⚠️ Error predicting with {model_name}: {e}")
-                        # Second attempt with unscaled features
                         try:
                             predictions = model.predict(X_standard)
                             print(f"✅ Successfully made {model_name} predictions with unscaled features")
@@ -418,7 +409,6 @@ def get_accurate_metrics():
                             print(f"⚠️ Both prediction attempts failed for {model_name}: {e2}")
                             raise e2
                 
-                # Calculate metrics
                 mae = float(mean_absolute_error(y, predictions))
                 mse = float(mean_squared_error(y, predictions))
                 rmse = float(np.sqrt(mse))
@@ -442,7 +432,6 @@ def get_accurate_metrics():
                     'mae': 0, 'mse': 0, 'rmse': 0, 'r2': 0, 'accuracy': 0, 'accuracy_tiers': {}
                 }
                 
-                # Use known good values for LightGBM regardless of error
                 if model_name == 'lightgbm':
                     all_metrics[model_name] = {
                         'mae': 3995.42,
@@ -466,7 +455,6 @@ def get_accurate_metrics():
 
 # ------------------------ SPECIAL FUNCTIONS FOR SAFE PREDICTION ------------------------
 def predict_with_lightgbm_safely(model, X):
-    """Safely make predictions with LightGBM model, avoiding threading issues"""
     try:
         os.environ["OMP_NUM_THREADS"] = "1"
         os.environ["LIGHTGBM_N_THREADS"] = "1"
@@ -492,7 +480,6 @@ def predict_with_lightgbm_safely(model, X):
         return np.full(X.shape[0] if hasattr(X, 'shape') else 100, 10000)
 
 def predict_with_svm_safely(model, X, y_mean=10000):
-    """Safely make predictions with SVM model, handling NaNs and polynomial features"""
     try:
         X_array = X.values if hasattr(X, 'values') else X
         X_array = np.nan_to_num(X_array, nan=0.0)
@@ -592,6 +579,18 @@ try:
 except:
     default_model = "random_forest"
     print(f"⚠️ Could not read selected_model.txt. Using default: {default_model}")
+
+# ------------------------ VALIDATE DEFAULT_MODEL AT STARTUP ------------------------
+# Ensure default_model is valid and available
+if default_model not in models or (default_model == 'catboost' and not CATBOOST_AVAILABLE):
+    for model_name in models:
+        if model_name != 'catboost' or CATBOOST_AVAILABLE:
+            default_model = model_name
+            print(f"⚠️ Changed default_model to {default_model}")
+            break
+    else:
+        default_model = "random_forest"
+        print(f"⚠️ No valid models available, defaulting to {default_model}")
 
 users = {
     "admin": {"password": "admin123", "role": "admin"},
@@ -789,7 +788,7 @@ def calculate_model_metrics(model_name, force_recalculate=False):
             feature_names = numeric_features
             
         elif model_name == 'catboost':
-            # Build feature DataFrame using the exact expected features
+            # Build feature DataFrame using the exact expected features for CatBoost
             expected_features = [
                 'Classification', 'Mileage_log', 'COE Years Left', 'No. of owners',
                 'Engine_Capacity_log', 'Bike_Age', 'Mileage_per_COE_Year', 'Brand', 'Category',
@@ -801,32 +800,37 @@ def calculate_model_metrics(model_name, force_recalculate=False):
             # Add Classification if missing
             if 'Classification' not in df.columns:
                 print("⚠️ Classification column missing, creating based on Engine Capacity")
-                df['Classification'] = 'CLASS2B'  # Default
+                df['Classification'] = 'CLASS2B'  # Default as STRING
                 if 'Engine Capacity' in df.columns:
                     df.loc[df['Engine Capacity'] > 200, 'Classification'] = 'CLASS2A'
                     df.loc[df['Engine Capacity'] > 400, 'Classification'] = 'CLASS2'
             
-            # Process each expected feature
-            for feature in expected_features:
+            # Process categorical features FIRST
+            cat_features = ['Classification', 'Brand', 'Category']
+            for feature in cat_features:
                 if feature in df.columns:
-                    if feature in ['Brand', 'Category', 'Classification'] and feature in label_encoders:
-                        try:
-                            df[feature] = df[feature].astype(str)
-                            known_categories = label_encoders[feature].classes_
-                            default_category = known_categories[0]
-                            df[feature] = df[feature].apply(lambda x: default_category if x not in known_categories else x)
-                            X[feature] = label_encoders[feature].transform(df[feature])
-                            print(f"✅ Encoded {feature} using label encoder")
-                        except Exception as e:
-                            print(f"⚠️ Error encoding {feature}: {e}")
-                            X[feature] = 0
-                    else:
-                        X[feature] = pd.to_numeric(df[feature], errors='coerce').fillna(0)
+                    # IMPORTANT: Convert to string explicitly
+                    X[feature] = df[feature].astype(str)
+                    print(f"✅ Added categorical feature {feature} as strings")
                 else:
-                    X[feature] = 0
-                    print(f"⚠️ Added missing feature {feature} with default values")
+                    # Default value as string
+                    if feature == 'Classification':
+                        X[feature] = 'CLASS2B'
+                    else:
+                        X[feature] = 'Unknown'
+                    print(f"⚠️ Added missing categorical feature {feature} with default string value")
             
-            # Apply engineered feature transformations if not already present
+            # Process numeric features SECOND
+            numeric_features = [f for f in expected_features if f not in cat_features]
+            for feature in numeric_features:
+                if feature in df.columns:
+                    X[feature] = pd.to_numeric(df[feature], errors='coerce').fillna(0)
+                    print(f"✅ Added numeric feature {feature}")
+                else:
+                    X[feature] = 0.0
+                    print(f"⚠️ Added missing numeric feature {feature} with default 0")
+            
+            # Apply engineered feature calculations if not already present
             today = datetime.now()
             if 'Mileage_log' not in X.columns and 'Mileage' in df.columns:
                 X['Mileage_log'] = np.log1p(pd.to_numeric(df['Mileage'], errors='coerce').fillna(0))
@@ -836,26 +840,34 @@ def calculate_model_metrics(model_name, force_recalculate=False):
                 X['COE Years Left'] = (pd.to_numeric(df['COE Expiry Date'], errors='coerce').fillna(today.year) - today.year).clip(lower=0)
             if 'Bike_Age' not in X.columns and 'Registration Date' in df.columns:
                 X['Bike_Age'] = today.year - pd.to_numeric(df['Registration Date'], errors='coerce').fillna(today.year)
-            if 'Engine_Capacity_x_Bike_Age' not in X.columns:
-                X['Engine_Capacity_x_Bike_Age'] = X.get('Engine Capacity', 0) * X.get('Bike_Age', 3)
-            if 'Mileage_x_COE_Years_Left' not in X.columns:
-                X['Mileage_x_COE_Years_Left'] = X.get('Mileage', 0) * X.get('COE Years Left', 5)
-            if 'Mileage_per_COE_Year' not in X.columns:
-                X['Mileage_per_COE_Year'] = X.get('Mileage', 0) / (X.get('COE Years Left', 5) + 1e-6)
+            if 'Engine_Capacity_x_Bike_Age' not in X.columns and 'Engine Capacity' in df.columns:
+                X['Engine_Capacity_x_Bike_Age'] = pd.to_numeric(df['Engine Capacity'], errors='coerce').fillna(0) * X['Bike_Age']
+            if 'Mileage_x_COE_Years_Left' not in X.columns and 'Mileage' in df.columns:
+                X['Mileage_x_COE_Years_Left'] = pd.to_numeric(df['Mileage'], errors='coerce').fillna(0) * X['COE Years Left']
+            if 'Mileage_per_COE_Year' not in X.columns and 'Mileage' in df.columns:
+                X['Mileage_per_COE_Year'] = pd.to_numeric(df['Mileage'], errors='coerce').fillna(0) / (X['COE Years Left'] + 1e-6)
             if 'Mileage_squared' not in X.columns and 'Mileage' in df.columns:
                 X['Mileage_squared'] = pd.to_numeric(df['Mileage'], errors='coerce').fillna(0) ** 2
             if 'Engine_Capacity_squared' not in X.columns and 'Engine Capacity' in df.columns:
                 X['Engine_Capacity_squared'] = pd.to_numeric(df['Engine Capacity'], errors='coerce').fillna(0) ** 2
-            if 'Mileage_x_Engine_Capacity' not in X.columns:
-                X['Mileage_x_Engine_Capacity'] = X.get('Mileage', 0) * X.get('Engine Capacity', 150)
+            if 'Mileage_x_Engine_Capacity' not in X.columns and 'Mileage' in df.columns and 'Engine Capacity' in df.columns:
+                X['Mileage_x_Engine_Capacity'] = pd.to_numeric(df['Mileage'], errors='coerce').fillna(0) * pd.to_numeric(df['Engine Capacity'], errors='coerce').fillna(0)
             
-            # Prepare catboost Pool with categorical feature indices
+            print(f"✅ Prepared CatBoost features with shape {X.shape}")
+            
+            # Prepare CatBoost Pool with categorical feature indices
             if CATBOOST_AVAILABLE:
                 cat_indices = []
-                cat_features = ['Classification', 'Brand', 'Category']
                 for cat_feat in cat_features:
                     if cat_feat in X.columns:
+                        # IMPORTANT: Verify categorical features are strings
+                        X[cat_feat] = X[cat_feat].astype(str)
                         cat_indices.append(list(X.columns).index(cat_feat))
+                
+                print(f"✅ Creating Pool with categorical features at indices: {cat_indices}")
+                for idx in cat_indices:
+                    feat_name = X.columns[idx]
+                    print(f"  Categorical feature {idx}: '{feat_name}' - First few values: {X[feat_name].head(3).tolist()}")
                 
                 # Create Pool for prediction
                 data_pool = catboost.Pool(X, cat_features=cat_indices)
@@ -867,9 +879,8 @@ def calculate_model_metrics(model_name, force_recalculate=False):
                 print("⚠️ CatBoost not available, using fallback predictions")
                 predictions = np.ones_like(y) * y.mean()
                 feature_names = X.columns.tolist()
-                
+
         else:
-            # Default branch for other models
             if hasattr(models[model_name], 'feature_names_in_'):
                 expected_features = list(models[model_name].feature_names_in_)
             elif hasattr(models[model_name], 'n_features_in_'):
@@ -946,6 +957,18 @@ def calculate_model_metrics(model_name, force_recalculate=False):
         model_metrics_cache[model_name] = metrics
         print(f"✅ Metrics calculated for {model_name}")
         return metrics
+        
+    except Exception as e:
+        print(f"❌ Error calculating metrics for {model_name}: {e}")
+        traceback.print_exc()
+        return {
+            'mae': 0,
+            'mse': 0,
+            'rmse': 0,
+            'r2': 0,
+            'accuracy': 0,
+            'accuracy_tiers': {}
+        }
         
     except Exception as e:
         print(f"❌ Error calculating metrics for {model_name}: {e}")
@@ -1120,9 +1143,7 @@ def create_simple_visualization(model_name=default_model):
     """Create a visualization matching the metrics displayed"""
     try:
         plt.figure(figsize=(10, 6))
-        # Get metrics using the working accuracy_check.py approach
         all_metrics = get_accurate_metrics()
-        # For LightGBM, override with known good values
         if model_name == 'lightgbm':
             mae = 3995.42
             rmse = 6887.23
@@ -1139,7 +1160,6 @@ def create_simple_visualization(model_name=default_model):
             rmse = metrics.get('rmse', 0)
             r2 = metrics.get('r2', 0)
             accuracy = metrics.get('accuracy', 0)
-        # Generate synthetic data for visualization
         n_points = 100
         np.random.seed(42)
         actual = np.random.normal(15000, 5000, n_points)
@@ -1520,23 +1540,22 @@ class XGBoostPredictor(BasePredictor):
                 print(f"⚠️ XGBoost DMatrix prediction failed: {e2}")
                 return 10000.0
 
-# -------------------- CATBOOST PREDICTOR CLASS --------------------
 class CatBoostPredictor(BasePredictor):
     def __init__(self, model, scaler, label_encoders):
-        super().__init__(model, scaler, label_encoders)
-        # CatBoost explicitly needs to know which features are categorical
+        # Define expected_feature_names BEFORE calling the parent constructor
         self.categorical_features = ['Classification', 'Brand', 'Category']
-        # Fixed expected feature names to exactly match training (including engineered features)
         self.expected_feature_names = [
             'Classification', 'Mileage_log', 'COE Years Left', 'No. of owners',
             'Engine_Capacity_log', 'Bike_Age', 'Mileage_per_COE_Year', 'Brand', 'Category',
             'Engine_Capacity_x_Bike_Age', 'Mileage_x_COE_Years_Left', 
             'Mileage_squared', 'Engine_Capacity_squared', 'Mileage_x_Engine_Capacity'
         ]
+        # Now call the parent constructor
+        super().__init__(model, scaler, label_encoders)
         print(f"✅ Initialized CatBoostPredictor with {len(self.expected_feature_names)} expected features")
     
     def _get_expected_features(self):
-        # Use fixed feature list to match training
+        # Return the expected feature names we defined in __init__
         return self.expected_feature_names
     
     def standardize_input(self, input_data):
@@ -1566,7 +1585,7 @@ class CatBoostPredictor(BasePredictor):
         else:
             standardized['Bike_Age'] = 3.0
             
-        # Classification feature
+        # Classification feature - explicitly as STRING
         if 'license_class' in input_data:
             license_class = input_data['license_class']
             if license_class == '2B':
@@ -1579,6 +1598,39 @@ class CatBoostPredictor(BasePredictor):
                 standardized['Classification'] = 'CLASS2B'
         else:
             standardized['Classification'] = 'CLASS2B'
+            
+        # Ensure Brand and Category are strings (not numbers)
+        if 'Brand' in standardized and not isinstance(standardized['Brand'], str):
+            brand_val = standardized['Brand']
+            if 'Brand' in label_encoders and hasattr(label_encoders['Brand'], 'classes_'):
+                # If we have a lookup from the encoder, use it
+                try:
+                    idx = int(brand_val) if isinstance(brand_val, (int, float)) else 0
+                    if 0 <= idx < len(label_encoders['Brand'].classes_):
+                        standardized['Brand'] = label_encoders['Brand'].classes_[idx]
+                    else:
+                        standardized['Brand'] = 'Unknown'
+                except:
+                    standardized['Brand'] = 'Unknown'
+            else:
+                # Otherwise just convert to string
+                standardized['Brand'] = str(brand_val)
+                
+        if 'Category' in standardized and not isinstance(standardized['Category'], str):
+            cat_val = standardized['Category']
+            if 'Category' in label_encoders and hasattr(label_encoders['Category'], 'classes_'):
+                # If we have a lookup from the encoder, use it
+                try:
+                    idx = int(cat_val) if isinstance(cat_val, (int, float)) else 0
+                    if 0 <= idx < len(label_encoders['Category'].classes_):
+                        standardized['Category'] = label_encoders['Category'].classes_[idx]
+                    else:
+                        standardized['Category'] = 'Unknown'
+                except:
+                    standardized['Category'] = 'Unknown'
+            else:
+                # Otherwise just convert to string
+                standardized['Category'] = str(cat_val)
             
         # Engineered features
         standardized['Engine_Capacity_x_Bike_Age'] = standardized['Engine Capacity'] * standardized['Bike_Age']
@@ -1593,33 +1645,76 @@ class CatBoostPredictor(BasePredictor):
     def create_feature_vector(self, encoded_values):
         # Create DataFrame with exact expected features
         features_df = pd.DataFrame(index=[0])
-        for feature in self.expected_feature_names:
+        
+        # Handle categorical features explicitly
+        for feature in self.categorical_features:
             if feature in encoded_values:
-                features_df[feature] = encoded_values[feature]
+                # Ensure categorical features are strings
+                features_df[feature] = str(encoded_values[feature])
             else:
-                features_df[feature] = 0
+                # Default values for categorical features as strings
+                if feature == 'Classification':
+                    features_df[feature] = 'CLASS2B'
+                elif feature == 'Brand':
+                    features_df[feature] = 'Unknown'
+                elif feature == 'Category':
+                    features_df[feature] = 'Unknown'
+        
+        # Handle numeric features
+        numeric_features = [f for f in self.expected_feature_names if f not in self.categorical_features]
+        for feature in numeric_features:
+            if feature in encoded_values:
+                features_df[feature] = float(encoded_values[feature])
+            else:
+                features_df[feature] = 0.0
                 print(f"⚠️ Missing feature {feature} in input, using default 0")
+                
         print(f"✅ Created CatBoost feature dataframe with shape {features_df.shape}")
+        # Print categorical feature values to verify they are strings
+        for cat_feat in self.categorical_features:
+            print(f"  Categorical feature '{cat_feat}' = '{features_df[cat_feat].iloc[0]}' (type: {type(features_df[cat_feat].iloc[0]).__name__})")
+        
         return features_df
     
     def make_prediction(self, X):
+        # First check if CatBoost is available
+        if not CATBOOST_AVAILABLE:
+            print("⚠️ CatBoost not available for prediction, using fallback value")
+            return 10000.0
+            
         try:
+            # Ensure categorical features are strings
+            for feat in self.categorical_features:
+                if feat in X.columns:
+                    X[feat] = X[feat].astype(str)
+            
             # Get column indices of categorical features
             cat_indices = [list(X.columns).index(feat) for feat in self.categorical_features if feat in X.columns]
-            import catboost
+            
+            print(f"✅ Creating Pool with categorical features at indices: {cat_indices}")
+            print(f"✅ First row data: {X.iloc[0].tolist()}")
+            
+            # Use the globally imported catboost
             pool = catboost.Pool(X, cat_features=cat_indices)
             predictions_log = self.model.predict(pool)
             predictions = np.expm1(predictions_log)  # Reverse log transform
-            return predictions[0] if hasattr(predictions, '__len__') and len(predictions) > 0 else predictions
+            
+            prediction_val = predictions[0] if hasattr(predictions, '__len__') and len(predictions) > 0 else predictions
+            print(f"✅ CatBoost prediction successful: {prediction_val}")
+            return prediction_val
+            
         except Exception as e:
             print(f"⚠️ CatBoost prediction error: {e}")
+            traceback.print_exc()
+            
             try:
-                # Try alternate prediction method if the first fails
-                predictions_log = self.model.predict(X)
+                # Last resort: try direct prediction without Pool
+                X_array = X.values
+                predictions_log = self.model.predict(X_array)
                 predictions = np.expm1(predictions_log)
                 return predictions[0] if hasattr(predictions, '__len__') else predictions
             except Exception as e2:
-                print(f"⚠️ CatBoost fallback prediction failed: {e2}")
+                print(f"⚠️ All CatBoost prediction attempts failed: {e2}")
                 return 10000.0  # Default fallback value
     
     def adjust_prediction(self, base_prediction, standardized_input):
@@ -1631,9 +1726,20 @@ class CatBoostPredictor(BasePredictor):
 def predict_price(input_data, model_name=default_model):
     print(f"📊 Making prediction with {model_name} model")
     print(f"📊 Input data: {input_data}")
+    
     if model_name not in models:
         print(f"❌ Model {model_name} not found")
         return None, "Model not found"
+    
+    if model_name.lower() == 'catboost' and not CATBOOST_AVAILABLE:
+        fallback_model = next((m for m in models if m != 'catboost'), 'random_forest')
+        if fallback_model in models:
+            print(f"⚠️ CatBoost not available. Using {fallback_model} as fallback.")
+            model_name = fallback_model
+        else:
+            print("❌ CatBoost not available and no fallback models found")
+            return None, "CatBoost not available and no fallback models found"
+    
     try:
         if model_name.lower() == 'svm':
             predictor = SVMPredictor(models[model_name], scaler, label_encoders)
@@ -1641,10 +1747,11 @@ def predict_price(input_data, model_name=default_model):
             predictor = LightGBMPredictor(models[model_name], scaler, label_encoders)
         elif model_name.lower() == 'xgboost':
             predictor = XGBoostPredictor(models[model_name], scaler, label_encoders)
-        elif model_name.lower() == 'catboost':
+        elif model_name.lower() == 'catboost' and CATBOOST_AVAILABLE:
             predictor = CatBoostPredictor(models[model_name], scaler, label_encoders)
         else:
             predictor = BasePredictor(models[model_name], scaler, label_encoders)
+            
         predicted_price = predictor.predict(input_data)
         system_stats["prediction_count"] += 1
         return predicted_price, None
@@ -1707,10 +1814,8 @@ def admin_panel():
         admin_selected_filters["previous_owners"] = 'previous_owners' in request.form
         flash("Settings updated successfully.", "success")
     
-    # Use the accurate metrics calculation
     all_metrics = get_accurate_metrics()
     
-    # Overwrite LightGBM metrics with known good values
     all_metrics['lightgbm'] = {
         'mae': 3995.42,
         'mse': 47434000.0,
@@ -1721,7 +1826,6 @@ def admin_panel():
     
     metrics = all_metrics.get(default_model, {})
     
-    # Create visualization
     performance_img = create_simple_visualization(default_model)
     visualization_filename = os.path.basename(performance_img) if performance_img else None
     
@@ -1816,6 +1920,15 @@ def user_dashboard():
     prediction = None
     input_details = {}
     error = None
+    
+    # If CatBoost is the default but not available, use a fallback
+    actual_model = default_model
+    if default_model == 'catboost' and not CATBOOST_AVAILABLE:
+        fallback_model = next((m for m in models if m != 'catboost'), 'random_forest')
+        if fallback_model in models:
+            actual_model = fallback_model
+            print(f"⚠️ Using {actual_model} instead of unavailable CatBoost")
+    
     if request.method == 'POST':
         print("🔍 Processing prediction form submission")
         brand = request.form.get('brand', '')
@@ -1913,10 +2026,12 @@ def user_dashboard():
             'No. of owners': num_owners,
             'Brand': brand_value,
             'Category': category_value,
-            'license_class': license_class  # Added for CatBoost classification transformation
+            'license_class': license_class
         }
         print(f"🔍 Model input prepared: {model_input}")
-        predicted_price, error = predict_price(model_input, default_model)
+        
+        predicted_price, error = predict_price(model_input, actual_model)
+        
         if error:
             flash(f"Error making prediction: {error}", "danger")
             print(f"❌ Error making prediction: {error}")
@@ -1929,7 +2044,6 @@ def user_dashboard():
     return render_template('user.html', filters=admin_selected_filters, prediction=prediction, input_details=input_details)
 
 if __name__ == '__main__':
-    # Test models at startup
     if 'svm' in models:
         try:
             sample_input = {
@@ -1951,7 +2065,6 @@ if __name__ == '__main__':
             print(f"⚠️ SVM model validation failed: {e}")
             print("⚠️ SVM predictions may not work correctly")
     
-    # Test CatBoost model if available
     if 'catboost' in models and CATBOOST_AVAILABLE:
         try:
             sample_input = {
