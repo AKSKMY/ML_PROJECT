@@ -5,6 +5,7 @@ import sys
 import subprocess
 import importlib
 import os
+import platform
 
 def check_module(module_name):
     """Check if a module is available for import"""
@@ -14,17 +15,37 @@ def check_module(module_name):
     except ImportError:
         return False
 
-def install_package(package_name):
+def check_rust_installed():
+    """Check if Rust/Cargo is installed"""
+    try:
+        result = subprocess.run(['cargo', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return result.returncode == 0
+    except FileNotFoundError:
+        return False
+
+def install_package(package_name, options=None):
     """Install a package using pip"""
     print(f"Installing {package_name}...")
+    cmd = [sys.executable, "-m", "pip", "install"]
+    
+    if options:
+        cmd.extend(options)
+    
+    cmd.append(package_name)
+    
     try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
+        subprocess.check_call(cmd)
         return True
     except subprocess.CalledProcessError as e:
         print(f"Error installing {package_name}: {e}")
         return False
 
 def main():
+    # Get Python version
+    python_version = sys.version_info
+    python_ver_str = f"{python_version.major}.{python_version.minor}.{python_version.micro}"
+    print(f"Python version: {python_ver_str}")
+    
     # Define required packages for motorcycle price prediction
     required_packages = {
         "scikit-learn": "sklearn",         # For SVM and other ML models
@@ -41,6 +62,9 @@ def main():
         "beautifulsoup4": "bs4"            # For web scraping
     }
     
+    # CatBoost requires special handling due to Rust dependencies
+    catboost_required = False
+    
     print("Checking for required dependencies for motorcycle price prediction...")
     missing_packages = []
     
@@ -49,20 +73,74 @@ def main():
         if not check_module(module_name):
             missing_packages.append(package_name)
     
+    # Check if CatBoost is missing
+    if not check_module("catboost"):
+        catboost_required = True
+    
     # Install missing packages
-    if missing_packages:
-        print(f"The following packages need to be installed: {', '.join(missing_packages)}")
+    if missing_packages or catboost_required:
+        packages_to_install = missing_packages.copy()
+        if catboost_required:
+            print("\nCatBoost is required but not installed.")
+        
+        if packages_to_install:
+            print(f"The following packages need to be installed: {', '.join(packages_to_install)}")
         
         # Ask for confirmation
-        if input("Do you want to install them now? (y/n): ").lower() != 'y':
+        if input("\nDo you want to install these packages now? (y/n): ").lower() != 'y':
             print("Installation canceled. Note that the application may not work correctly without these packages.")
             return
         
-        for package in missing_packages:
+        for package in packages_to_install:
             if install_package(package):
                 print(f"✅ {package} installed successfully")
             else:
                 print(f"❌ Failed to install {package}")
+        
+        # Handle CatBoost installation separately
+        if catboost_required:
+            print("\n--- CatBoost Installation ---")
+            
+            # Check if Python version might be incompatible
+            is_python_too_new = python_version.major == 3 and python_version.minor >= 12
+            
+            if is_python_too_new:
+                print(f"⚠️ Warning: Python {python_ver_str} may not be supported by CatBoost yet.")
+                print("CatBoost may not have pre-built wheels for this Python version.")
+                
+                if input("Would you like to try installing CatBoost anyway? (y/n): ").lower() != 'y':
+                    print("Skipping CatBoost installation.")
+                    print("The application will continue to work with the other ML models.")
+                    return
+            
+            print("CatBoost requires Rust to be installed for some dependencies.")
+            
+            if check_rust_installed():
+                print("✅ Rust is installed. Attempting to install CatBoost...")
+                if install_package("catboost"):
+                    print("✅ CatBoost installed successfully")
+                else:
+                    print("❌ Failed to install CatBoost with Rust available")
+                    print("\nAlternative options:")
+                    if is_python_too_new:
+                        print(f"1. Try using Python 3.10 or 3.11 instead of {python_ver_str}")
+                    print(f"2. The application will continue to work with other ML models")
+            else:
+                print("⚠️ Rust is not installed. Attempting to install pre-built CatBoost wheel...")
+                if install_package("catboost", ["--only-binary", ":all:"]):
+                    print("✅ CatBoost binary version installed successfully")
+                else:
+                    print("❌ Failed to install CatBoost binary version")
+                    print("\nTo install CatBoost with all features, you need to:")
+                    print("1. Install Rust from https://rustup.rs/")
+                    print("2. Add Rust to your PATH environment variable")
+                    print("3. Run this installer again or manually install with: pip install catboost")
+                    
+                    if is_python_too_new:
+                        print(f"\nAlternatively, CatBoost may not support Python {python_ver_str} yet.")
+                        print("Consider using Python 3.10 or 3.11 instead.")
+                    
+                    print("\nThe application will continue to work with the other ML models")
     else:
         print("✅ All required packages are already installed!")
     

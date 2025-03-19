@@ -261,7 +261,8 @@
                 .text(model === "svm" ? "Support Vector Machine" : 
                       (model === "random_forest" ? "Random Forest" : 
                       (model === "lightgbm" ? "LightGBM" : 
-                      (model === "xgboost" ? "XGBoost" : model))));
+                      (model === "xgboost" ? "XGBoost" : 
+                      (model === "catboost" ? "CatBoost" : model)))));
               if (model === selectedModel) {
                 option.attr("selected", "selected");
               }

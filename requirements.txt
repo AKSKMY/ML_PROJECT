@@ -13,3 +13,4 @@ seaborn==0.13.2
 selenium==4.29.0
 telethon==1.39.0
 xgboost==3.0.0
+catboost>=1.1.1
