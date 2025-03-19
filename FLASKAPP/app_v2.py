@@ -318,7 +318,7 @@ print(f"🔍 Template directory: {template_dir}")
 print(f"🔍 Static directory: {static_dir}")
 
 models_directory = os.path.join(parent_dir, "saved_models")
-available_models = ["random_forest", "xgboost", "lightgbm", "svm"]
+available_models = ["random_forest", "xgboost", "lightgbm", "svm", "catboost"]
 models = {}
 for model_name in available_models:
     model_path = os.path.join(models_directory, f"{model_name}_regressor.pkl")
@@ -441,7 +441,7 @@ def load_dataset(sample=False, force_reload=False):
         dataset_cache = synthetic_df
         return synthetic_df.sample(n=100, random_state=42) if sample else synthetic_df
 
-def create_combined_plots(metrics_data, model_name):
+def create_combined_plots(metrics_data, model_name=default_model):
     y_true = metrics_data.get('y_true', [])
     y_pred = metrics_data.get('y_pred', [])
     errors = metrics_data.get('errors', [])
@@ -496,7 +496,7 @@ def standardize_column_names(df):
     print(f"Original column names: {df.columns.tolist()}")
     column_mapping = {
         'Engine Capacity': 'Engine Capacity',
-        'engine capacity': 'Engine Capacity',
+        'engine capacity': 'Engine Capacity', 
         'CC': 'Engine Capacity',
         'Displacement': 'Engine Capacity',
         'Registration Date': 'Registration Date',
@@ -568,17 +568,42 @@ def calculate_model_metrics(model_name, force_recalculate=False):
                 print(f"⚠️ LightGBM prediction failed: {e}. Using fallback predictions.")
                 predictions = np.ones_like(y) * y.mean()
             feature_names = numeric_features
+        elif model_name == 'catboost':
+            expected_features = ['Brand', 'Engine Capacity', 'Registration Date', 'COE Expiry Date', 'Mileage', 'No. of owners', 'Category']
+            for feature in expected_features:
+                if feature in df.columns:
+                    if feature in ['Brand', 'Category'] and feature in label_encoders:
+                        try:
+                            df[feature] = df[feature].astype(str)
+                            known_categories = label_encoders[feature].classes_
+                            default_category = known_categories[0]
+                            df[feature] = df[feature].apply(lambda x: default_category if x not in known_categories else x)
+                            X[feature] = label_encoders[feature].transform(df[feature])
+                            print(f"✅ Encoded {feature} using label encoder")
+                        except Exception as e:
+                            print(f"⚠️ Error encoding {feature}: {e}")
+                            X[feature] = 0
+                    else:
+                        X[feature] = pd.to_numeric(df[feature], errors='coerce').fillna(0)
+                else:
+                    X[feature] = 0
+                    print(f"⚠️ Added missing feature {feature} with default values")
+            try:
+                predictions = models[model_name].predict(X)
+                print(f"✅ Successfully made predictions with {model_name}")
+            except Exception as e:
+                print(f"⚠️ Error predicting: {e}. Using fallback predictions.")
+                predictions = np.ones_like(y) * y.mean()
+            feature_names = X.columns.tolist()
         else:
             if hasattr(models[model_name], 'feature_names_in_'):
                 expected_features = list(models[model_name].feature_names_in_)
             elif hasattr(models[model_name], 'n_features_in_'):
                 n_features = models[model_name].n_features_in_
                 if n_features == 7:
-                    expected_features = ['Brand', 'Engine Capacity', 'Registration Date',
-                                         'COE Expiry Date', 'Mileage', 'No. of owners', 'Category']
+                    expected_features = ['Brand', 'Engine Capacity', 'Registration Date', 'COE Expiry Date', 'Mileage', 'No. of owners', 'Category']
                 elif n_features == 5:
-                    expected_features = ['Engine Capacity', 'Registration Date', 'COE Expiry Date',
-                                         'Mileage', 'No. of owners']
+                    expected_features = ['Engine Capacity', 'Registration Date', 'COE Expiry Date', 'Mileage', 'No. of owners']
                 else:
                     expected_features = [col for col in df.columns if col != target_col]
             else:
@@ -716,6 +741,11 @@ def create_simple_visualization(model_name=default_model):
             rmse = 6887.23
             r2 = 0.7324
             accuracy = 73.2
+        elif model_name == 'catboost':
+            mae = all_metrics.get(model_name, {}).get('mae', 0)
+            rmse = all_metrics.get(model_name, {}).get('rmse', 0)
+            r2 = all_metrics.get(model_name, {}).get('r2', 0)
+            accuracy = all_metrics.get(model_name, {}).get('accuracy', 0)
         else:
             metrics = all_metrics.get(model_name, {})
             mae = metrics.get('mae', 0)
@@ -1012,7 +1042,7 @@ class SVMPredictor(BasePredictor):
                 print("✅ SVM model is responsive to different inputs")
                 print(f"  Unique predictions: {prediction_set}")
             else:
-                print("⚠️ SVM model is NOT responsive to different inputs")
+                print("⚠️ WARNING: SVM model may not be responding properly to input changes")
                 print("  All test cases produced the same prediction")
             return is_responsive
         except Exception as e:
@@ -1094,6 +1124,34 @@ class XGBoostPredictor(BasePredictor):
                 print(f"⚠️ XGBoost DMatrix prediction failed: {e2}")
                 return 10000.0
 
+class CatBoostPredictor(BasePredictor):
+    def create_feature_vector(self, encoded_values):
+        features_df = pd.DataFrame([encoded_values])
+        for col in features_df.columns:
+            features_df[col] = pd.to_numeric(features_df[col], errors='coerce').fillna(0)
+        for feature in self.expected_features:
+            if feature not in features_df.columns:
+                features_df[feature] = 0
+        result_df = features_df[self.expected_features]
+        print(f"✅ Created CatBoost feature dataframe with shape {result_df.shape}")
+        return result_df
+    
+    def make_prediction(self, X):
+        try:
+            X_array = X.values if hasattr(X, 'values') else np.array(X)
+            prediction = self.model.predict(X_array)
+            return prediction[0] if hasattr(prediction, '__len__') and len(prediction) > 0 else prediction
+        except Exception as e:
+            print(f"⚠️ CatBoost prediction error: {e}")
+            try:
+                import catboost
+                pool = catboost.Pool(X_array)
+                prediction = self.model.predict(pool)
+                return prediction[0] if hasattr(prediction, '__len__') and len(prediction) > 0 else prediction
+            except Exception as e2:
+                print(f"⚠️ CatBoost Pool prediction failed: {e2}")
+                return 10000.0
+
 def predict_price(input_data, model_name=default_model):
     print(f"📊 Making prediction with {model_name} model")
     print(f"📊 Input data: {input_data}")
@@ -1107,6 +1165,8 @@ def predict_price(input_data, model_name=default_model):
             predictor = LightGBMPredictor(models[model_name], scaler, label_encoders)
         elif model_name.lower() == 'xgboost':
             predictor = XGBoostPredictor(models[model_name], scaler, label_encoders)
+        elif model_name.lower() == 'catboost':
+            predictor = CatBoostPredictor(models[model_name], scaler, label_encoders)
         else:
             predictor = BasePredictor(models[model_name], scaler, label_encoders)
         predicted_price = predictor.predict(input_data)
@@ -1156,9 +1216,9 @@ def prepare_lightgbm_features(df, model, target_col=None):
                 lgbm_df[feature] = lgbm_df[feature].astype(str)
                 known_categories = label_encoders[feature].classes_
                 default_category = known_categories[0]
-                lgbm_df[feature] = lgbm_df[feature].apply(lambda x: x if x in known_categories else default_category)
+                lgbm_df[feature] = lgbm_df[feature].apply(lambda x: default_category if x not in known_categories else x)
                 lgbm_df[feature] = label_encoders[feature].transform(lgbm_df[feature])
-                print(f"✅ Encoded {feature} with label encoder")
+                print(f"✅ Encoded {feature} using label encoder")
             else:
                 lgbm_df[feature] = pd.to_numeric(lgbm_df[feature], errors='coerce').fillna(0)
         else:
@@ -1252,7 +1312,7 @@ def clean_dataset_for_prediction(df):
                 df_clean[col] = df_clean[col].fillna(median_value)
                 print(f"✅ Replaced missing values in {col} with median: {median_value}")
             else:
-                df_clean[col] = df_clean[col].replace('-', 0)
+                df_clean[col] = df_clean[col].replace('-', np.nan)
                 df_clean[col] = df_clean[col].fillna(0)
                 print(f"⚠️ No valid values in {col}, replaced missing values with 0")
     return df_clean
