@@ -112,7 +112,10 @@ python predict_motorbike_prices.py
   - **Solution**: Re-check data preprocessing steps and model training consistency. Or change features used in training the models.
 
 ## 6. Testing our other models
-- 
+- **VISUALISATION**
+- ```bash python visuals.py```
+- Modify evaluate_model("xgboost") to relevant model for testing
+
 
 ---
 
