@@ -1325,49 +1325,94 @@ class BasePredictor:
         return encoded_values
     
     def create_feature_vector(self, encoded_values):
-        X = []
+        """
+        Creates a properly structured feature vector for prediction.
+        Uses pandas DataFrame to preserve feature names and ordering.
+        
+        Args:
+            encoded_values: Dict of feature names and their encoded values
+            
+        Returns:
+            A pandas DataFrame with the expected features in the correct order
+        """
+        # Create pandas DataFrame to preserve feature names
+        features_df = pd.DataFrame([encoded_values])
+        
+        # Ensure only expected features are included and in correct order
+        result_df = pd.DataFrame(index=[0])
         for feature in self.expected_features:
-            X.append(encoded_values[feature])
-        X_array = np.array(X).reshape(1, -1)
-        print(f"✅ Created feature vector with shape {X_array.shape}")
-        return X_array
-    
+            if feature in features_df.columns:
+                result_df[feature] = features_df[feature].values
+            else:
+                result_df[feature] = 0
+                print(f"⚠️ Added missing feature {feature} with default values")
+        print(f"✅ Created feature DataFrame with shape {result_df.shape} and columns: {result_df.columns.tolist()}")
+        return result_df
+
     def apply_scaling(self, X):
+        """
+        Applies the scaler to numeric features while preserving DataFrame structure.
+        
+        Args:
+            X: DataFrame with features to scale
+            
+        Returns:
+            DataFrame with scaled numeric features
+        """
         try:
             if self.scaler is not None:
-                if hasattr(X, 'columns'):
-                    X.columns = X.columns.astype(str)
-                if hasattr(self.scaler, 'n_features_in_'):
-                    scaler_feature_count = self.scaler.n_features_in_
-                    if X.shape[1] == scaler_feature_count:
-                        return self.scaler.transform(X)
-                    elif X.shape[1] > scaler_feature_count:
-                        X_to_scale = X[:, :scaler_feature_count]
-                        X_scaled = X.copy().astype(float)
-                        X_scaled[:, :scaler_feature_count] = self.scaler.transform(X_to_scale)
-                        return X_scaled
-                    else:
-                        print("⚠️ Insufficient features for scaling, using unscaled data")
-                        return X
-                else:
-                    return self.scaler.transform(X)
+                # Identify which columns should be scaled (numeric features)
+                numeric_cols = [col for col in X.columns if col in self.numeric_features]
+                if numeric_cols:
+                    X_numeric = X[numeric_cols].copy()
+                    try:
+                        scaled_values = self.scaler.transform(X_numeric)
+                        # Replace the values in the original DataFrame
+                        for i, col in enumerate(numeric_cols):
+                            X[col] = scaled_values[:, i]
+                        print(f"✅ Applied scaling to numeric features: {numeric_cols}")
+                    except Exception as e:
+                        print(f"⚠️ Error during scaling operation: {e}")
+                        print("⚠️ Continuing with unscaled features")
             else:
-                print("⚠️ No scaler available, using unscaled data")
-                return X
+                print("ℹ️ No scaler available, using unscaled data")
+            return X
         except Exception as e:
             print(f"⚠️ Scaling error: {e}")
-            return X.astype(float)
-    
+            return X
+
     def make_prediction(self, X_scaled):
+        """
+        Makes a prediction using the model while handling potential errors.
+        
+        Args:
+            X_scaled: Scaled feature DataFrame
+            
+        Returns:
+            The predicted value, or a fallback value if prediction fails
+        """
         try:
-            return self.model.predict(X_scaled)[0]
+            predictions = self.model.predict(X_scaled)
+            return predictions[0] if hasattr(predictions, '__len__') and len(predictions) > 0 else predictions
         except Exception as e:
             print(f"⚠️ First prediction attempt failed: {e}")
             try:
-                return self.model.predict(X_scaled.astype(float))[0]
+                # Try converting to numpy array as fallback
+                X_array = X_scaled.values if hasattr(X_scaled, 'values') else X_scaled
+                predictions = self.model.predict(X_array)
+                return predictions[0] if hasattr(predictions, '__len__') and len(predictions) > 0 else predictions
             except Exception as e2:
                 print(f"⚠️ Second prediction attempt failed: {e2}")
-                return 10000.0
+                try:
+                    # Last resort: try prediction with a stripped-down array
+                    if hasattr(X_scaled, 'values'):
+                        X_simple = np.array(X_scaled.values, dtype=float)
+                        X_simple = np.nan_to_num(X_simple)  # Replace NaN with 0
+                        predictions = self.model.predict(X_simple)
+                        return predictions[0] if hasattr(predictions, '__len__') and len(predictions) > 0 else predictions
+                except Exception as e3:
+                    print(f"⚠️ All prediction attempts failed: {e3}")
+                    return 10000.0  # Default fallback value
     
     def adjust_prediction(self, base_prediction, standardized_input):
         return base_prediction
@@ -1468,50 +1513,157 @@ class SVMPredictor(BasePredictor):
 
 class LightGBMPredictor(BasePredictor):
     def __init__(self, model, scaler, label_encoders):
+        # Define the feature mapping before calling super()
+        self.feature_mapping = {
+            'Engine Capacity': 'Engine_Capacity',
+            'Registration Date': 'Registration_Date',
+            'COE Expiry Date': 'COE_Expiry_Date',
+            'No. of owners': 'No._of_owners',
+            'Brand': 'Brand',
+            'Category': 'Category',
+            'Mileage': 'Mileage'
+        }
         super().__init__(model, scaler, label_encoders)
-        self.column_mapping.update({
-            'No. of owners': 'No. of owners'
-        })
+        self.reverse_mapping = {v: k for k, v in self.feature_mapping.items()}
+        print(f"✅ Initialized LightGBMPredictor with feature mapping")
+        
     def _get_expected_features(self):
+        """Get the expected feature names for LightGBM"""
         if hasattr(self.model, 'feature_name_'):
             return [str(name) for name in self.model.feature_name_]
         elif hasattr(self.model, 'booster_') and hasattr(self.model.booster_, 'feature_name'):
             return self.model.booster_.feature_name()
         else:
-            return super()._get_expected_features()
+            # Default feature names with underscores (LightGBM style)
+            return ['Engine_Capacity', 'Registration_Date', 'COE_Expiry_Date', 'Mileage', 'No._of_owners', 'Brand', 'Category']
+    
+    def standardize_input(self, input_data):
+        """Map standard input features to LightGBM-expected feature names"""
+        # First standardize using parent method to handle any missing features
+        standardized = super().standardize_input(input_data)
+        
+        # Store original values for later use in adjustments
+        self.original_values = standardized.copy()
+        print(f"✅ Original standardized input: {self.original_values}")
+        
+        # Now create a new dict with mapped feature names
+        mapped_input = {}
+        for key, value in standardized.items():
+            if key in self.feature_mapping:
+                mapped_key = self.feature_mapping[key]
+                mapped_input[mapped_key] = value
+                print(f"✅ Mapped '{key}' to '{mapped_key}' with value {value}")
+            else:
+                mapped_input[key] = value
+        
+        return mapped_input
+    
     def create_feature_vector(self, encoded_values):
-        features_df = pd.DataFrame([encoded_values])
+        """Create a feature DataFrame with exactly the expected LightGBM features"""
+        # Create a DataFrame with the expected features
+        features_df = pd.DataFrame(index=[0])
+        expected_features = self._get_expected_features()
+        
+        print(f"🔍 LightGBM expects these features: {expected_features}")
+        print(f"🔍 Original values available: {self.original_values}")
+        
+        # First try to use values from encoded_values (with underscore names)
+        for feature in expected_features:
+            if feature in encoded_values and encoded_values[feature] != 0:
+                features_df[feature] = encoded_values[feature]
+                print(f"✅ Using value {encoded_values[feature]} for feature '{feature}' from encoded values")
+                continue
+                
+            # If not in encoded_values or value is 0, try to use original values
+            original_key = self.reverse_mapping.get(feature)
+            if original_key and original_key in self.original_values:
+                features_df[feature] = self.original_values[original_key]
+                print(f"✅ Using value {self.original_values[original_key]} for feature '{feature}' from original values")
+            else:
+                # Last resort - use 0
+                features_df[feature] = 0
+                print(f"⚠️ Using default value 0 for feature '{feature}'")
+        
+        # Ensure all values are numeric
         for col in features_df.columns:
             features_df[col] = pd.to_numeric(features_df[col], errors='coerce').fillna(0)
-        expected_features = self._get_expected_features()
-        if not all(feature in features_df.columns for feature in expected_features):
-            for feature in expected_features:
-                if feature not in features_df.columns:
-                    features_df[feature] = 0
-        result_df = features_df[expected_features]
-        print(f"✅ Created LightGBM feature dataframe with shape {result_df.shape}")
-        return result_df
+        
+        print(f"✅ Created LightGBM feature dataframe with shape {features_df.shape}")
+        print(f"✅ Final feature values: {features_df.iloc[0].to_dict()}")
+        return features_df
+    
     def make_prediction(self, X):
+        """Make prediction with LightGBM while handling various error scenarios"""
         try:
-            prediction = self.model.predict(X, predict_disable_shape_check=True, num_threads=1)
-            return prediction[0] if hasattr(prediction, '__len__') and len(prediction) > 0 else prediction
+            os.environ["OMP_NUM_THREADS"] = "1"
+            os.environ["LIGHTGBM_N_THREADS"] = "1"
+            
+            predictions = self.model.predict(X, predict_disable_shape_check=True, num_threads=1)
+            result = predictions[0] if hasattr(predictions, '__len__') and len(predictions) > 0 else predictions
+            print(f"✅ LightGBM prediction successful: {result}")
+            return result
         except Exception as e:
-            print(f"⚠️ First prediction attempt failed: {e}")
+            print(f"⚠️ First LightGBM prediction attempt failed: {e}")
             try:
+                # Try numpy array conversion
                 features_array = X.values if hasattr(X, 'values') else np.array(X)
-                prediction = self.model.predict(features_array, num_threads=1)
-                return prediction[0] if hasattr(prediction, '__len__') and len(prediction) > 0 else prediction
+                predictions = self.model.predict(features_array, num_threads=1)
+                return predictions[0] if hasattr(predictions, '__len__') and len(predictions) > 0 else predictions
             except Exception as e2:
-                print(f"⚠️ Second prediction attempt failed: {e2}")
+                print(f"⚠️ Second LightGBM prediction attempt failed: {e2}")
                 try:
+                    # Direct booster access
                     if hasattr(self.model, 'booster_'):
                         raw_pred = self.model.booster_.predict(X)
                         return raw_pred[0] if hasattr(raw_pred, '__len__') and len(raw_pred) > 0 else raw_pred
                 except Exception as e3:
-                    print(f"⚠️ All prediction attempts failed: {e3}")
+                    print(f"⚠️ All LightGBM prediction attempts failed: {e3}")
                     return 10000.0
+    
     def apply_scaling(self, X):
+        """LightGBM doesn't need scaling"""
         return X
+    
+    def adjust_prediction(self, base_prediction, standardized_input):
+        """Apply post-prediction adjustments using original values"""
+        prediction = base_prediction
+        
+        # Use the original values that we stored in standardize_input
+        orig_input = self.original_values
+        
+        # Apply COE adjustment
+        if 'COE Expiry Date' in orig_input:
+            coe_year = orig_input['COE Expiry Date']
+            years_left = max(0, float(coe_year) - self.current_year)
+            coe_factor = 1.0 + (years_left * 0.05)
+            prediction *= coe_factor
+            print(f"📅 COE adjustment: {years_left} years → factor {coe_factor:.2f}")
+        
+        # Apply engine capacity adjustment for license class
+        if 'Engine Capacity' in orig_input:
+            engine_cc = orig_input['Engine Capacity']
+            if engine_cc > 300:  # Class 2 license
+                engine_factor = 1.0 + min(0.3, (engine_cc - 300) / 1000)
+                prediction *= engine_factor
+                print(f"🏍️ Engine capacity adjustment: {engine_cc}cc → factor {engine_factor:.2f}")
+        
+        # Apply owner adjustment
+        if 'No. of owners' in orig_input:
+            owners = orig_input['No. of owners']
+            if owners > 1:
+                owner_factor = 1.0 - ((owners - 1) * 0.1)
+                prediction *= owner_factor
+                print(f"👥 Owner adjustment: {owners} owners → factor {owner_factor:.2f}")
+        
+        # Apply mileage adjustment
+        if 'Mileage' in orig_input:
+            mileage = orig_input['Mileage']
+            if mileage > 20000:
+                mileage_factor = 1.0 - min(0.25, (mileage - 20000) / 100000)
+                prediction *= mileage_factor
+                print(f"🛣️ Mileage adjustment: {mileage}km → factor {mileage_factor:.2f}")
+        
+        return prediction
 
 class XGBoostPredictor(BasePredictor):
     def create_feature_vector(self, encoded_values):
