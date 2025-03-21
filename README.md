@@ -1,4 +1,4 @@
-# Motorcycle Price Prediction Web Application
+# Motorcycle Price Prediction Web Application Manual
 
 A Flask-based machine learning web application for predicting motorcycle prices in the Singapore market. This project integrates several ML algorithms—including Random Forest, XGBoost, LightGBM, SVM, and (optionally) CatBoost—to provide accurate price predictions based on motorbike attributes. The application features a user-friendly web interface with distinct roles for regular users and administrators, dynamic performance visualizations, and a robust training pipeline.
 
