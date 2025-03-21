@@ -1,8 +1,16 @@
+# Motorbike Price Prediction Application
+# This application provides a web interface for predicting motorcycle prices
+# using machine learning models trained on Singapore motorcycle market data.
+
+# Standard Flask imports for web application functionality
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory
-# Set non-interactive Matplotlib backend to prevent threading issues
+
+# Configure Matplotlib for non-interactive backend to avoid thread issues in Flask
 import matplotlib
-matplotlib.use('Agg')
-import joblib
+matplotlib.use('Agg')  # Must be set before importing pyplot
+
+# Data processing and machine learning libraries
+import joblib  # For loading saved models
 import os
 import numpy as np
 import pandas as pd
@@ -11,6 +19,8 @@ import seaborn as sns
 import json
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
+
+# System and utility imports
 import time
 import sys
 import importlib.util
@@ -23,7 +33,9 @@ from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from scipy import stats
 
-# ------------------------ CATBOOST IMPORT CHECK ------------------------
+# ------------------------ MODEL DEPENDENCIES ------------------------
+# Check if CatBoost is installed - it's optional but recommended for best performance
+# CatBoost provides gradient boosting implementation optimized for categorical features
 try:
     import catboost
     CATBOOST_AVAILABLE = True
@@ -33,6 +45,7 @@ except ImportError:
     print("⚠️ CatBoost module not available. CatBoost models will not work. Install with 'pip install catboost'")
 
 # ------------------------ SET THREADING ENVIRONMENT VARIABLES ------------------------
+# Configure environment variables to control threading behavior for various libraries
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["LIGHTGBM_N_THREADS"] = "1"
 os.environ["LOKY_MAX_CPU_COUNT"] = str(os.cpu_count() or 4)
@@ -93,7 +106,7 @@ def create_synthetic_dataset():
 # ------------------------ DATASET SEARCH FUNCTION ------------------------
 def find_dataset():
     global DATASET_PATH
-    if DATASET_PATH and os.path.exists(DATASET_PATH):
+    if (DATASET_PATH and os.path.exists(DATASET_PATH)):
         print(f"✅ Using cached dataset path: {DATASET_PATH}")
         return DATASET_PATH
     dataset_names = ["combined_dataset_latest.xlsx", "bike_data.xlsx", "Latest_Dataset.xlsx", "bike_data_removedsold.xlsx"]
@@ -292,35 +305,132 @@ def get_accurate_metrics():
                 
                 # Use the right feature set for each model type
                 if model_name == 'catboost' and CATBOOST_AVAILABLE:
-                    cat_indices = []
+                    # ===== CATBOOST SECTION START =====
+                    # Define features based on CatBoosting.py
                     cat_features = ['Classification', 'Brand', 'Category']
+                    expected_features = [
+                        'Classification', 'Mileage_log', 'COE Years Left', 'No. of owners',
+                        'Engine_Capacity_log', 'Bike_Age', 'Mileage_per_COE_Year', 'Brand', 'Category',
+                        'Engine_Capacity_x_Bike_Age', 'Mileage_x_COE_Years_Left', 
+                        'Mileage_squared', 'Engine_Capacity_squared', 'Mileage_x_Engine_Capacity'
+                    ]
                     
-                    # Special handling for CatBoost
+                    # Create a new DataFrame for CatBoost features
                     X_catboost = pd.DataFrame(index=df.index)
                     
-                    # Add Classification if missing
+                    # Add Classification if missing (matching CatBoosting.py logic)
                     if 'Classification' not in df.columns:
-                        df['Classification'] = 'CLASS2B'  # Default
+                        print("✅ Adding missing 'Classification' feature")
+                        df['Classification'] = 'CLASS2B'  # Default as STRING
+                        # Assign CLASS2A for 200cc+ and CLASS2 for 400cc+
                         if 'Engine Capacity' in df.columns:
                             df.loc[df['Engine Capacity'] > 200, 'Classification'] = 'CLASS2A'
                             df.loc[df['Engine Capacity'] > 400, 'Classification'] = 'CLASS2'
                     
+                    # Clean Classification - strip spaces and convert to uppercase
+                    if 'Classification' in df.columns:
+                        df['Classification'] = df['Classification'].astype(str).str.replace(" ", "").str.upper()
+                        # Handle cases outside the valid set
+                        valid_classes = {'CLASS2B', 'CLASS2A', 'CLASS2'}
+                        df.loc[~df['Classification'].isin(valid_classes), 'Classification'] = 'CLASS2B'
+                    
+                    # 1. Copy categorical features to X_catboost (with proper string conversion)
+                    for cat_feat in cat_features:
+                        if cat_feat in df.columns:
+                            X_catboost[cat_feat] = df[cat_feat].astype(str)  # Ensure categorical features are strings
+                            print(f"✅ Added categorical feature {cat_feat}")
+                        else:
+                            # Default value as string
+                            if cat_feat == 'Classification':
+                                X_catboost[cat_feat] = 'CLASS2B'
+                            else:
+                                X_catboost[cat_feat] = 'Unknown'
+                            print(f"✅ Added default value for missing categorical feature {cat_feat}")
+                    
+                    # 2. Calculate all required features
+                    today = datetime.now()
+                    
+                    # Basic numeric features
+                    if 'Mileage' in df.columns:
+                        X_catboost['Mileage'] = pd.to_numeric(df['Mileage'], errors='coerce').fillna(0)
+                        X_catboost['Mileage_log'] = np.log1p(X_catboost['Mileage'])
+                    else:
+                        X_catboost['Mileage'] = 0
+                        X_catboost['Mileage_log'] = 0
+                    
+                    if 'Engine Capacity' in df.columns:
+                        X_catboost['Engine Capacity'] = pd.to_numeric(df['Engine Capacity'], errors='coerce').fillna(0)
+                        X_catboost['Engine_Capacity_log'] = np.log1p(X_catboost['Engine Capacity'])
+                    else:
+                        X_catboost['Engine Capacity'] = 0
+                        X_catboost['Engine_Capacity_log'] = 0
+                    
+                    if 'No. of owners' in df.columns:
+                        X_catboost['No. of owners'] = pd.to_numeric(df['No. of owners'], errors='coerce').fillna(1)
+                    else:
+                        X_catboost['No. of owners'] = 1
+                    
+                    # Time and age related features (matching CatBoosting.py logic)
+                    if 'COE Expiry Date' in df.columns:
+                        coe_years = pd.to_numeric(df['COE Expiry Date'], errors='coerce').fillna(today.year)
+                        X_catboost['COE Years Left'] = (coe_years - today.year).clip(lower=0)
+                    else:
+                        X_catboost['COE Years Left'] = 5
+                    
+                    if 'Registration Date' in df.columns:
+                        reg_years = pd.to_numeric(df['Registration Date'], errors='coerce').fillna(today.year)
+                        X_catboost['Bike_Age'] = (today.year - reg_years).clip(lower=0)
+                    else:
+                        X_catboost['Bike_Age'] = 3
+                    
+                    # Engineered features (consistent with CatBoosting.py)
+                    X_catboost['Engine_Capacity_x_Bike_Age'] = X_catboost['Engine Capacity'] * X_catboost['Bike_Age']
+                    X_catboost['Mileage_x_COE_Years_Left'] = X_catboost['Mileage'] * X_catboost['COE Years Left']
+                    X_catboost['Mileage_per_COE_Year'] = X_catboost['Mileage'] / (X_catboost['COE Years Left'] + 1e-6)
+                    X_catboost['Mileage_squared'] = X_catboost['Mileage'] ** 2
+                    X_catboost['Engine_Capacity_squared'] = X_catboost['Engine Capacity'] ** 2
+                    X_catboost['Mileage_x_Engine_Capacity'] = X_catboost['Mileage'] * X_catboost['Engine Capacity']
+                    
+                    # Validate the DataFrame
+                    print(f"✅ Prepared CatBoost features with shape {X_catboost.shape}")
+                    print(f"✅ Features present: {X_catboost.columns.tolist()}")
+                    
+                    # Remove NaN values that might cause issues
+                    X_catboost = X_catboost.fillna(0)
+                    
+                    # Get indices of categorical features
+                    cat_indices = []
                     for cat_feat in cat_features:
                         if cat_feat in X_catboost.columns:
                             cat_indices.append(list(X_catboost.columns).index(cat_feat))
                     
+                    # Debugging info
+                    print(f"✅ Using categorical features at indices: {cat_indices}")
+                    for idx in cat_indices:
+                        feat_name = X_catboost.columns[idx]
+                        print(f"  Categorical feature {idx}: '{feat_name}' - First few values: {X_catboost[feat_name].head(3).tolist()}")
+                    
+                    # Make prediction (with proper error handling)
                     if CATBOOST_AVAILABLE:
                         try:
+                            # Ensure categorical features are strings
+                            for cat_feat in cat_features:
+                                if cat_feat in X_catboost.columns:
+                                    X_catboost[cat_feat] = X_catboost[cat_feat].astype(str)
+                            
+                            # Create Pool and make prediction
                             data_pool = catboost.Pool(X_catboost, cat_features=cat_indices)
                             predictions_log = model.predict(data_pool)
-                            predictions = np.expm1(predictions_log)  # Reverse log transform
+                            predictions = np.expm1(predictions_log)  # Reverse log transform (as in CatBoosting.py)
                             print(f"✅ Successfully made predictions with {model_name}")
                         except Exception as e:
                             print(f"❌ Error with CatBoost prediction: {e}")
+                            traceback.print_exc()
                             predictions = np.ones_like(y) * y.mean()
                     else:
                         print(f"❌ CatBoost not available")
                         predictions = np.ones_like(y) * y.mean()
+                    # ===== CATBOOST SECTION END =====
                         
                 elif model_name == 'svm':
                     try:
