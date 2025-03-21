@@ -46,6 +46,21 @@ def main():
     python_ver_str = f"{python_version.major}.{python_version.minor}.{python_version.micro}"
     print(f"Python version: {python_ver_str}")
     
+    # Check if Python version is 3.11.x
+    if python_version.major != 3 or python_version.minor != 11:
+        print(f"❌ ERROR: This project requires Python 3.11.x, but you are using Python {python_ver_str}")
+        print("Please install Python 3.11 and try again.")
+        if python_version.major == 3 and python_version.minor > 11:
+            print("Note: Newer versions of Python (3.12+) are not compatible with some of the dependencies used in this project.")
+        elif python_version.major == 3 and python_version.minor < 11:
+            print("Note: This project uses features that require Python 3.11 specifically.")
+        
+        # Ask if user wants to continue anyway (not recommended)
+        if input("\nDo you want to continue anyway? This is NOT RECOMMENDED and may cause errors. (y/n): ").lower() != 'y':
+            print("Installation canceled. Please install Python 3.11 before proceeding.")
+            return
+        print("\n⚠️ Continuing with an unsupported Python version. You may encounter errors!\n")
+    
     # Define required packages for motorcycle price prediction
     required_packages = {
         "scikit-learn": "sklearn",         # For SVM and other ML models
@@ -59,7 +74,9 @@ def main():
         "lightgbm": "lightgbm",            # For LightGBM model
         "openpyxl": "openpyxl",            # For Excel file handling
         "requests": "requests",            # For web scraping
-        "beautifulsoup4": "bs4"            # For web scraping
+        "beautifulsoup4": "bs4",           # For web scraping
+        "waitress": "waitress",            # For production server deployment
+        "scipy": "scipy"                   # For statistical functions and stats module
     }
     
     # CatBoost requires special handling due to Rust dependencies
@@ -123,7 +140,7 @@ def main():
                     print("❌ Failed to install CatBoost with Rust available")
                     print("\nAlternative options:")
                     if is_python_too_new:
-                        print(f"1. Try using Python 3.10 or 3.11 instead of {python_ver_str}")
+                        print(f"1. Try using Python 3.11 instead of {python_ver_str}")
                     print(f"2. The application will continue to work with other ML models")
             else:
                 print("⚠️ Rust is not installed. Attempting to install pre-built CatBoost wheel...")
@@ -138,7 +155,7 @@ def main():
                     
                     if is_python_too_new:
                         print(f"\nAlternatively, CatBoost may not support Python {python_ver_str} yet.")
-                        print("Consider using Python 3.10 or 3.11 instead.")
+                        print("Consider using Python 3.11 instead.")
                     
                     print("\nThe application will continue to work with the other ML models")
     else:
